@@ -42,6 +42,7 @@ final class FacturaVencimientoService {
         }
 
         for factura in proximas {
+            cancelarRecordatorios(para: factura)
             programarRecordatorios(para: factura)
         }
 

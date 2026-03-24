@@ -65,17 +65,23 @@ final class VeriFactuSOAPClient: NSObject, ObservableObject {
             let responseText = String(data: data, encoding: .utf8) ?? ""
 
             if statusCode == 200 {
-                if responseText.contains("Correcta") || responseText.contains("AceptadaConErrores") {
+                let estado = parsearEstadoRespuesta(responseText)
+                switch estado {
+                case .aceptada:
                     registro.estadoEnvio = .enviado
                     registro.fechaEnvio = .now
                     registro.respuestaAEAT = "Aceptada (HTTP \(statusCode))"
-                } else if responseText.contains("Rechazada") || responseText.contains("Incorrecto") {
-                    registro.estadoEnvio = .rechazado
-                    registro.respuestaAEAT = String(responseText.prefix(500))
-                } else {
+                case .aceptadaConErrores:
                     registro.estadoEnvio = .enviado
                     registro.fechaEnvio = .now
-                    registro.respuestaAEAT = "HTTP \(statusCode)"
+                    registro.respuestaAEAT = "Aceptada con errores (HTTP \(statusCode))"
+                case .rechazada(let detalle):
+                    registro.estadoEnvio = .rechazado
+                    registro.respuestaAEAT = detalle.isEmpty ? "Rechazada" : String(detalle.prefix(500))
+                case .desconocido:
+                    registro.estadoEnvio = .enviado
+                    registro.fechaEnvio = .now
+                    registro.respuestaAEAT = "HTTP \(statusCode) — respuesta no reconocida"
                 }
             } else {
                 registro.estadoEnvio = .error
@@ -151,5 +157,55 @@ final class SOAPSessionDelegate: NSObject, URLSessionDelegate, @unchecked Sendab
         }
 
         return (.performDefaultHandling, nil)
+    }
+}
+
+// MARK: - Parseo de respuesta AEAT
+
+enum EstadoRespuestaAEAT {
+    case aceptada
+    case aceptadaConErrores
+    case rechazada(String)
+    case desconocido
+}
+
+nonisolated func parsearEstadoRespuesta(_ xml: String) -> EstadoRespuestaAEAT {
+    // Parse XML to find EstadoEnvio element
+    class SOAPResponseParser: NSObject, XMLParserDelegate {
+        var estadoEnvio = ""
+        var descripcionError = ""
+        var currentElement = ""
+        var currentText = ""
+
+        func parser(_ parser: XMLParser, didStartElement elementName: String, namespaceURI: String?, qualifiedName: String?, attributes: [String : String] = [:]) {
+            currentElement = elementName.components(separatedBy: ":").last ?? elementName
+            currentText = ""
+        }
+
+        func parser(_ parser: XMLParser, foundCharacters string: String) {
+            currentText += string
+        }
+
+        func parser(_ parser: XMLParser, didEndElement elementName: String, namespaceURI: String?, qualifiedName: String?) {
+            let name = elementName.components(separatedBy: ":").last ?? elementName
+            if name == "EstadoEnvio" { estadoEnvio = currentText.trimmingCharacters(in: .whitespacesAndNewlines) }
+            if name == "DescripcionErrorRegistro" { descripcionError = currentText.trimmingCharacters(in: .whitespacesAndNewlines) }
+        }
+    }
+
+    guard let data = xml.data(using: .utf8) else { return .desconocido }
+    let parser = XMLParser(data: data)
+    let delegate = SOAPResponseParser()
+    parser.delegate = delegate
+    parser.parse()
+
+    switch delegate.estadoEnvio {
+    case "Correcta": return .aceptada
+    case "AceptadaConErrores": return .aceptadaConErrores
+    case "Incorrecto", "Rechazada": return .rechazada(delegate.descripcionError)
+    default:
+        // Fallback for unexpected format
+        if xml.contains("Correcta") { return .aceptada }
+        return .desconocido
     }
 }

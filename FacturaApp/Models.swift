@@ -554,7 +554,17 @@ enum DataConfig {
         do {
             return try ModelContainer(for: schema, configurations: config)
         } catch {
-            fatalError("Error creando ModelContainer: \(error)")
+            // Fallback: intentar sin CloudKit
+            print("ERROR ModelContainer con CloudKit: \(error.localizedDescription). Intentando sin CloudKit...")
+            let fallbackConfig = ModelConfiguration("FacturaApp", isStoredInMemoryOnly: false)
+            do {
+                return try ModelContainer(for: schema, configurations: fallbackConfig)
+            } catch {
+                // Último recurso: en memoria
+                print("ERROR ModelContainer local: \(error.localizedDescription). Usando almacenamiento en memoria.")
+                let memoryConfig = ModelConfiguration(isStoredInMemoryOnly: true)
+                return try! ModelContainer(for: schema, configurations: memoryConfig)
+            }
         }
     }()
 }

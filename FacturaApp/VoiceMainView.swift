@@ -44,6 +44,7 @@ struct VoiceMainView: View {
     @State private var facturaParaEditar: Factura?
     @State private var tipoImportacion: TipoImportacion?
     @State private var mostrarImportador = false
+    @State private var currentTask: Task<Void, Never>?
 
     private var hayNegocio: Bool { !negocios.isEmpty }
 
@@ -193,7 +194,8 @@ struct VoiceMainView: View {
 
         procesando = true
 
-        Task {
+        currentTask?.cancel()
+        currentTask = Task {
             await aiService.procesarComando(textoLimpio)
 
             procesando = false
