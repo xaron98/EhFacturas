@@ -36,15 +36,11 @@ enum CSVParser {
     }
 
     private static func parsearTexto(_ texto: String, encoding: String) -> ResultadoCSV? {
-        let lineas = texto.components(separatedBy: .newlines)
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
-
+        // Split into lines respecting quoted fields
+        let lineas = splitLineasCSV(texto)
         guard lineas.count >= 2 else { return nil }
 
-        // Detectar separador
         let separador = detectarSeparador(lineas[0])
-
         let cabeceras = parsearLinea(lineas[0], separador: separador)
         guard cabeceras.count >= 2 else { return nil }
 
@@ -57,13 +53,34 @@ enum CSVParser {
         }
 
         guard !filas.isEmpty else { return nil }
+        return ResultadoCSV(cabeceras: cabeceras, filas: filas, separador: String(separador), encoding: encoding)
+    }
 
-        return ResultadoCSV(
-            cabeceras: cabeceras,
-            filas: filas,
-            separador: String(separador),
-            encoding: encoding
-        )
+    /// Splits CSV text into logical lines, respecting quoted fields that may contain newlines.
+    private static func splitLineasCSV(_ texto: String) -> [String] {
+        var lineas: [String] = []
+        var lineaActual = ""
+        var dentroComillas = false
+
+        for char in texto {
+            if char == "\"" {
+                dentroComillas.toggle()
+                lineaActual.append(char)
+            } else if (char == "\n" || char == "\r") && !dentroComillas {
+                let trimmed = lineaActual.trimmingCharacters(in: .whitespaces)
+                if !trimmed.isEmpty {
+                    lineas.append(trimmed)
+                }
+                lineaActual = ""
+            } else {
+                lineaActual.append(char)
+            }
+        }
+        let trimmed = lineaActual.trimmingCharacters(in: .whitespaces)
+        if !trimmed.isEmpty {
+            lineas.append(trimmed)
+        }
+        return lineas
     }
 
     private static func detectarSeparador(_ linea: String) -> Character {
@@ -79,10 +96,26 @@ enum CSVParser {
         var campos: [String] = []
         var campoActual = ""
         var dentroComillas = false
+        var prevQuote = false
 
         for char in linea {
+            if prevQuote && char == "\"" {
+                // Escaped quote ("") -> literal "
+                campoActual.append("\"")
+                prevQuote = false
+                continue
+            }
+            if prevQuote {
+                // Single quote ended the quoted section
+                dentroComillas = false
+                prevQuote = false
+            }
             if char == "\"" {
-                dentroComillas.toggle()
+                if dentroComillas {
+                    prevQuote = true
+                } else {
+                    dentroComillas = true
+                }
             } else if char == separador && !dentroComillas {
                 campos.append(campoActual.trimmingCharacters(in: .whitespaces))
                 campoActual = ""
@@ -91,7 +124,6 @@ enum CSVParser {
             }
         }
         campos.append(campoActual.trimmingCharacters(in: .whitespaces))
-
         return campos
     }
 }
@@ -123,8 +155,8 @@ final class ImportadorService: ObservableObject {
         // Cargar artículos existentes para detectar duplicados
         let desc = FetchDescriptor<Articulo>(predicate: #Predicate<Articulo> { $0.activo == true })
         let existentes = (try? modelContext.fetch(desc)) ?? []
-        let refsExistentes = Set(existentes.map { $0.referencia.lowercased() }.filter { !$0.isEmpty })
-        let nombresExistentes = Set(existentes.map { $0.nombre.lowercased() })
+        var refsExistentes = Set(existentes.map { $0.referencia.lowercased() }.filter { !$0.isEmpty })
+        var nombresExistentes = Set(existentes.map { $0.nombre.lowercased() })
 
         for (i, fila) in filas.enumerated() {
             progreso = Double(i + 1) / Double(filas.count)
@@ -169,6 +201,8 @@ final class ImportadorService: ObservableObject {
 
             modelContext.insert(articulo)
             importados += 1
+            if !ref.isEmpty { refsExistentes.insert(ref.lowercased()) }
+            nombresExistentes.insert(nombre.lowercased())
         }
 
         try? modelContext.save()
@@ -202,8 +236,8 @@ final class ImportadorService: ObservableObject {
 
         let desc = FetchDescriptor<Cliente>(predicate: #Predicate<Cliente> { $0.activo == true })
         let existentes = (try? modelContext.fetch(desc)) ?? []
-        let nifsExistentes = Set(existentes.map { $0.nif.lowercased() }.filter { !$0.isEmpty })
-        let nombresExistentes = Set(existentes.map { $0.nombre.lowercased() })
+        var nifsExistentes = Set(existentes.map { $0.nif.lowercased() }.filter { !$0.isEmpty })
+        var nombresExistentes = Set(existentes.map { $0.nombre.lowercased() })
 
         for (i, fila) in filas.enumerated() {
             progreso = Double(i + 1) / Double(filas.count)
@@ -238,6 +272,8 @@ final class ImportadorService: ObservableObject {
 
             modelContext.insert(cliente)
             importados += 1
+            if !nif.isEmpty { nifsExistentes.insert(nif.lowercased()) }
+            nombresExistentes.insert(nombre.lowercased())
         }
 
         try? modelContext.save()

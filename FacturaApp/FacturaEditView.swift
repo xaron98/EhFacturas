@@ -20,6 +20,7 @@ struct FacturaEditView: View {
     @State private var mostrarShareXML = false
     @State private var xmlDataParaCompartir: Data?
     @State private var refreshTrigger = 0
+    @State private var confirmarEmision = false
 
     private var esEditable: Bool {
         factura.estado == .borrador
@@ -137,6 +138,12 @@ struct FacturaEditView: View {
                     ShareSheet(items: [data])
                 }
             }
+            .confirmationDialog("¿Emitir factura?", isPresented: $confirmarEmision) {
+                Button("Emitir") { emitirFacturaDesdeEditor() }
+                Button("Cancelar", role: .cancel) { }
+            } message: {
+                Text("Una vez emitida, no se podrá modificar.")
+            }
         }
     }
 
@@ -186,7 +193,7 @@ struct FacturaEditView: View {
 
                     if factura.estado == .borrador {
                         miniBoton(titulo: "Emitir", icono: "paperplane", color: .green) {
-                            emitirFacturaDesdeEditor()
+                            confirmarEmision = true
                         }
                     }
 

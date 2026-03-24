@@ -267,12 +267,13 @@ enum VeriFactuXMLGenerator {
         return formatter.string(from: date)
     }
 
-    /// Formatea una fecha con hora en formato dd-MM-yyyy HH:mm:ss (formato VeriFactu XSD).
+    /// Formatea una fecha con hora y huso horario en formato dd-MM-yyyy HH:mm:ss±HH:MM (formato VeriFactu XSD).
     static func formatTimestampXSD(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "dd-MM-yyyy HH:mm:ss"
-        formatter.locale = Locale(identifier: "es_ES")
-        return formatter.string(from: date)
+        let f = DateFormatter()
+        f.dateFormat = "dd-MM-yyyy HH:mm:ssZZZZZ"
+        f.locale = Locale(identifier: "es_ES")
+        f.timeZone = TimeZone.current
+        return f.string(from: date)
     }
 
     /// Formatea un importe con 2 decimales, sin símbolo de moneda.

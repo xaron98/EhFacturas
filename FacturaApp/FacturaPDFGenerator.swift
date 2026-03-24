@@ -390,7 +390,14 @@ enum FacturaPDFGenerator {
         // Construir URL de verificación AEAT
         let fechaStr = formatFechaQR(factura.fecha)
         let importe = String(format: "%.2f", factura.totalFactura)
-        let urlString = "https://www2.agenciatributaria.gob.es/wlpl/TIKE-CONT/ValidarQR?nif=\(negocio.nif)&numserie=\(factura.numeroFactura)&fecha=\(fechaStr)&importe=\(importe)"
+        var components = URLComponents(string: "https://www2.agenciatributaria.gob.es/wlpl/TIKE-CONT/ValidarQR")
+        components?.queryItems = [
+            URLQueryItem(name: "nif", value: negocio.nif),
+            URLQueryItem(name: "numserie", value: factura.numeroFactura),
+            URLQueryItem(name: "fecha", value: fechaStr),
+            URLQueryItem(name: "importe", value: importe)
+        ]
+        let urlString = components?.url?.absoluteString ?? ""
 
         // Generar QR
         guard let qrImage = generarQRImage(from: urlString, size: qrSize) else { return }

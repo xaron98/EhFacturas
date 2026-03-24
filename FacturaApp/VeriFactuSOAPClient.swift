@@ -104,7 +104,7 @@ final class VeriFactuSOAPClient: NSObject, ObservableObject {
 
         for registro in pendientes {
             let diasDesdeGeneracion = Calendar.current.dateComponents([.day], from: registro.fechaHoraGeneracion, to: .now).day ?? 0
-            if diasDesdeGeneracion > 4 {
+            if diasDesdeGeneracion >= 4 {
                 registro.estadoEnvio = .error
                 registro.respuestaAEAT = "Plazo de 4 días superado"
                 try? modelContext.save()

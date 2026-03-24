@@ -120,8 +120,9 @@ enum VeriFactuHashService {
 
     private static func formatTimestamp(_ date: Date) -> String {
         let f = DateFormatter()
-        f.dateFormat = "dd-MM-yyyy HH:mm:ss"
+        f.dateFormat = "dd-MM-yyyy HH:mm:ssZZZZZ"
         f.locale = Locale(identifier: "es_ES")
+        f.timeZone = TimeZone.current
         return f.string(from: date)
     }
 }

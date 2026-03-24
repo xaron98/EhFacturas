@@ -18,6 +18,9 @@ final class SpeechService: ObservableObject {
     @Published var errorMensaje: String?
 
     private var recognizer: SFSpeechRecognizer?
+    // SAFETY: recognitionRequest is set/nil'd only from @MainActor.
+    // The audio tap captures a local copy before using it.
+    // audioEngine is started/stopped only from @MainActor.
     nonisolated(unsafe) private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     private var recognitionTask: SFSpeechRecognitionTask?
     nonisolated(unsafe) private let audioEngine = AVAudioEngine()

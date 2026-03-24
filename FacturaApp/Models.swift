@@ -583,6 +583,37 @@ enum Formateadores {
         return f
     }()
 
+    /// Guarda el contexto con logging de errores.
+    static func guardarContexto(_ context: ModelContext, operacion: String = "") {
+        do {
+            try context.save()
+        } catch {
+            print("ERROR guardando \(operacion): \(error.localizedDescription)")
+        }
+    }
+
+    /// Valida formato de NIF/CIF español.
+    /// NIF: 8 dígitos + letra. CIF: letra + 7 dígitos + dígito/letra. NIE: X/Y/Z + 7 dígitos + letra.
+    static func validarNIF(_ nif: String) -> Bool {
+        let trimmed = nif.trimmingCharacters(in: .whitespaces).uppercased()
+        guard trimmed.count == 9 else { return false }
+
+        // NIF: 8 dígitos + letra
+        let nifPattern = "^[0-9]{8}[A-Z]$"
+        // CIF: letra + 7 dígitos + dígito/letra
+        let cifPattern = "^[ABCDEFGHJKLMNPQRSUVW][0-9]{7}[0-9A-J]$"
+        // NIE: X/Y/Z + 7 dígitos + letra
+        let niePattern = "^[XYZ][0-9]{7}[A-Z]$"
+
+        let patterns = [nifPattern, cifPattern, niePattern]
+        for pattern in patterns {
+            if trimmed.range(of: pattern, options: .regularExpression) != nil {
+                return true
+            }
+        }
+        return false
+    }
+
     /// Parsea un texto de precio aceptando coma o punto como separador decimal
     static func parsearPrecio(_ texto: String) -> Double? {
         let limpio = texto

@@ -320,6 +320,8 @@ struct FacturaDetalleView: View {
     @State private var mostrarPDF = false
     @State private var mostrarShareXML = false
     @State private var xmlData: Data?
+    @State private var confirmarEmision = false
+    @State private var confirmarAnulacion = false
 
     var body: some View {
         List {
@@ -358,7 +360,7 @@ struct FacturaDetalleView: View {
                         }
                         if factura.estado == .borrador {
                             accionBoton("Emitir", icono: "paperplane", color: .blue) {
-                                emitirFactura(factura)
+                                confirmarEmision = true
                             }
                         }
                         if factura.estado == .emitida {
@@ -370,7 +372,7 @@ struct FacturaDetalleView: View {
                         }
                         if factura.estado == .emitida || factura.estado == .pagada {
                             accionBoton("Anular", icono: "xmark.circle", color: .red) {
-                                anularFactura(factura)
+                                confirmarAnulacion = true
                             }
                         }
                         if factura.estado == .emitida || factura.estado == .anulada {
@@ -536,6 +538,18 @@ struct FacturaDetalleView: View {
             if let data = xmlData {
                 ShareSheet(items: [data])
             }
+        }
+        .confirmationDialog("¿Emitir factura?", isPresented: $confirmarEmision) {
+            Button("Emitir") { emitirFactura(factura) }
+            Button("Cancelar", role: .cancel) { }
+        } message: {
+            Text("Una vez emitida, la factura no se podrá modificar. Se generará un registro VeriFactu.")
+        }
+        .confirmationDialog("¿Anular factura?", isPresented: $confirmarAnulacion) {
+            Button("Anular", role: .destructive) { anularFactura(factura) }
+            Button("Cancelar", role: .cancel) { }
+        } message: {
+            Text("Se creará un registro de anulación VeriFactu. Esta acción no se puede deshacer.")
         }
     }
 
