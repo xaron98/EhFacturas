@@ -35,31 +35,47 @@ Cumplimiento VeriFactu completo (Real Decreto 1007/2023) — hash chain, XML, SO
 ## Estructura
 ```
 FacturaApp/
-├── Models.swift              # 9 @Model entities + enums + DataConfig
-├── SpeechService.swift       # Speech framework (es-ES)
-├── CommandAIService.swift    # 10 Tools IA (Foundation Models)
-├── VoiceMainView.swift       # Vista principal chat + @main + Bandeja
-├── ClientesView.swift        # CRUD clientes
-├── ArticulosView.swift       # CRUD artículos + FlowLayout
-├── FacturasListView.swift    # Dashboard + lista + detalle + emit/anular/rectificar
-├── FacturaPDFGenerator.swift # PDF A4 + QR + preview + ShareSheet
-├── FacturaCardView.swift     # Tarjeta de factura en chat + FacturaChatCard
-├── FacturaEditView.swift     # Editor factura fullscreen + LineaEditRow
-├── FacturaEditAIService.swift # IA contextual para editar facturas (4 tools)
-├── MapeoUniversal.swift      # Sinónimos universales + detector programa + mapeo + perfiles
-├── ImportadorService.swift   # Parser CSV + importador + ImportarView
+├── AI/                        # Multi-provider AI abstraction (refactor en curso)
+│   ├── AIProvider.swift       # Protocol + types + UnavailableAIProvider
+│   ├── AIProviderFactory.swift # (pendiente) Runtime provider selection
+│   ├── AppleAIProvider.swift  # FoundationModels wrapper (#if canImport)
+│   ├── FacturaActions.swift   # 14 shared business logic functions
+│   ├── ClaudeAIProvider.swift # (pendiente) Anthropic Claude API
+│   ├── OpenAIProvider.swift   # (pendiente) OpenAI API
+│   ├── CloudToolSchemas.swift # (pendiente) JSON tool definitions
+│   └── APIKeyManager.swift   # (pendiente) Backend proxy auth
+├── Models.swift               # 9 @Model entities + enums + DataConfig
+├── SpeechService.swift        # Speech framework (es-ES)
+├── CommandAIService.swift     # 10 Tools IA (a refactorizar → usar AIProvider)
+├── VoiceMainView.swift        # Vista principal chat + @main + Bandeja
+├── ClientesView.swift         # CRUD clientes
+├── ArticulosView.swift        # CRUD artículos + FlowLayout
+├── FacturasListView.swift     # Dashboard + lista + detalle + emit/anular/rectificar
+├── FacturaPDFGenerator.swift  # PDF A4 + QR + preview + ShareSheet
+├── FacturaCardView.swift      # Tarjeta de factura en chat + FacturaChatCard
+├── FacturaEditView.swift      # Editor factura fullscreen + LineaEditRow
+├── FacturaEditAIService.swift # IA contextual (a refactorizar → usar AIProvider)
+├── MapeoUniversal.swift       # Sinónimos + detector programa + mapeo + perfiles
+├── ImportadorService.swift    # Parser CSV + importador + ImportarView
+├── SubscriptionManager.swift  # (pendiente) StoreKit 2
 ├── VeriFactuHashService.swift # SHA-256 hash chain + verificación
 ├── VeriFactuXMLGenerator.swift # XML XSD AEAT V1.0
-├── VeriFactuSOAPClient.swift # Cliente SOAP + cola offline
+├── VeriFactuSOAPClient.swift  # Cliente SOAP + cola offline
 ├── VeriFactuCertificateManager.swift # Certificado .p12 + Keychain
-├── VeriFactuXMLSigner.swift  # Firma XMLDSig (C14N + RSA-SHA256)
-├── EventLogService.swift     # Registro de eventos
-├── EventLogView.swift        # Vista log de auditoría
-├── AjustesView.swift         # Config negocio + certificado + onboarding
+├── VeriFactuXMLSigner.swift   # Firma XMLDSig (C14N + RSA-SHA256)
+├── EventLogService.swift      # Registro de eventos
+├── EventLogView.swift         # Vista log de auditoría
+├── AjustesView.swift          # Config negocio + certificado + onboarding
 ├── FacturaVencimientoService.swift # Vencimientos + notificaciones
-├── FacturaAIService.swift    # Legacy (referencia)
-└── FacturaAIView.swift       # Legacy (referencia)
+├── FacturaAIService.swift     # Legacy (stub)
+└── FacturaAIView.swift        # Legacy (stub)
 ```
+
+## Multi-provider AI (refactor en curso)
+Plan: `/Users/xaron/.claude/plans/golden-wobbling-adleman.md`
+- Tasks 1-2 HECHAS: FacturaActions + AIProvider + AppleAIProvider
+- Tasks 3-9 PENDIENTES: cloud providers, subscription, refactor services, iOS 17
+- Tool `call()` en AppleAIProvider: DEBE usar `await MainActor.run { }` para llamar a FacturaActions
 
 ## Tools de IA (10 en CommandAIService + 4 en FacturaEditAIService)
 - `configurar_negocio` — datos del negocio (onboarding por voz)
