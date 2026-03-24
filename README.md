@@ -10,23 +10,34 @@ App de facturación voice-first para autónomos y pequeñas empresas en España.
 
 ### Voice-First
 - Micrófono como interfaz principal — habla y la IA ejecuta
-- 9 herramientas de IA: crear clientes, artículos, facturas, buscar, anular, consultar resumen, configurar negocio
+- 10 herramientas de IA: crear clientes, artículos, facturas, buscar, anular, importar, consultar resumen, configurar negocio
 - Onboarding conversacional: configura tu negocio hablando
 - Campo de texto como alternativa al micrófono
 
 ### Facturación completa
 - CRUD de clientes, artículos y facturas
-- Categorías de artículos predefinidas (iluminación, cables, fontanería, etc.)
+- Categorías de artículos predefinidas
 - Facturas con múltiples tipos de IVA (21%, 10%, 4%, exento)
 - IRPF configurable (7% nuevos autónomos / 15% general)
 - Numeración correlativa automática
 - Descuentos por línea y globales
+- Facturas rectificativas y anulaciones
 
 ### Edición en tiempo real con IA
 - Tarjeta de factura interactiva en el chat
 - Editor a pantalla completa con edición manual + IA
 - "Cambia las bombillas a 10" — la factura se actualiza al instante
 - Genera PDF desde el editor
+
+### Importador universal CSV
+- Importa artículos y clientes desde cualquier programa de facturación
+- Compatible con: Salfon, Contaplus, a3factura, Holded, Billin, Quipu, FacturaDirecta, Debitoor/SumUp, y CSV genérico
+- Detección automática del programa de origen
+- 500+ sinónimos para mapeo automático de columnas
+- Mapeo manual cuando falla la detección
+- Perfiles guardables para reutilizar
+- Multi-encoding: UTF-8, ISO-8859-1, Windows-1252
+- Por voz: "Importa artículos de Salfon"
 
 ### PDF profesional
 - Formato A4 con colores corporativos
@@ -45,6 +56,7 @@ Cumplimiento completo del reglamento de facturación verificable:
 - **Cola offline** — reintentos automáticos (plazo máximo 4 días)
 - **Inalterabilidad** — facturas emitidas bloqueadas, solo anulación o rectificativa
 - **Registro de fabricante** — declaración responsable conforme al RD
+- **Exportar XML** — comparte el XML VeriFactu de cada factura
 
 ### Extras
 - Vencimientos con notificaciones locales
@@ -70,6 +82,7 @@ Cumplimiento completo del reglamento de facturación verificable:
 | SOAP | URLSession + client certificate |
 | Notificaciones | UserNotifications |
 | Background | BackgroundTasks |
+| Importación | CSV parser nativo (multi-encoding) |
 
 ---
 
@@ -77,9 +90,9 @@ Cumplimiento completo del reglamento de facturación verificable:
 
 ```
 FacturaApp/
-├── Models.swift                     # 8 modelos SwiftData + enums
+├── Models.swift                     # 9 modelos SwiftData + enums
 ├── SpeechService.swift              # Reconocimiento de voz es-ES
-├── CommandAIService.swift           # 9 Tools IA (Foundation Models)
+├── CommandAIService.swift           # 10 Tools IA (Foundation Models)
 ├── VoiceMainView.swift              # Chat principal + @main
 ├── ClientesView.swift               # CRUD clientes
 ├── ArticulosView.swift              # CRUD artículos + FlowLayout
@@ -88,6 +101,8 @@ FacturaApp/
 ├── FacturaEditView.swift            # Editor factura + IA inline
 ├── FacturaEditAIService.swift       # 4 Tools edición de factura
 ├── FacturaPDFGenerator.swift        # PDF A4 + QR + preview
+├── MapeoUniversal.swift             # Sinónimos + detector programa + mapeo
+├── ImportadorService.swift          # Parser CSV + importador + vista
 ├── AjustesView.swift                # Config negocio + certificado
 ├── VeriFactuHashService.swift       # SHA-256 cadena de hashes
 ├── VeriFactuXMLGenerator.swift      # XML XSD AEAT V1.0
@@ -96,7 +111,9 @@ FacturaApp/
 ├── VeriFactuXMLSigner.swift         # Firma XMLDSig (C14N + RSA)
 ├── EventLogService.swift            # Registro de eventos
 ├── EventLogView.swift               # Vista log de auditoría
-└── FacturaVencimientoService.swift  # Vencimientos + notificaciones
+├── FacturaVencimientoService.swift  # Vencimientos + notificaciones
+├── FacturaAIService.swift           # Legacy (referencia)
+└── FacturaAIView.swift              # Legacy (referencia)
 ```
 
 ---
@@ -130,12 +147,32 @@ Para enviar facturas a la AEAT:
 
 | Comando | Acción |
 |---|---|
-| "Añade un cliente Juan García, teléfono 612345678" | Crea cliente |
+| "Me llamo Juan García, NIF 12345678A" | Configura el negocio |
+| "Añade un cliente Pedro López, teléfono 612345678" | Crea cliente |
 | "Añade bombilla LED a 3,50 euros" | Crea artículo |
-| "Factura para Juan con 5 bombillas y 2 horas de mano de obra" | Crea factura |
-| "La factura de Juan ya está cobrada" | Marca como pagada |
+| "Factura para Pedro con 5 bombillas y 2 horas de mano de obra" | Crea factura |
+| "Cambia las bombillas a 10" | Edita la factura en tiempo real |
+| "La factura de Pedro ya está cobrada" | Marca como pagada |
 | "Anula la última factura" | Anula factura |
+| "Importa artículos de Salfon" | Abre importador CSV |
+| "Carga clientes desde un archivo" | Importa clientes CSV |
 | "¿Cuánto tengo pendiente de cobrar?" | Consulta resumen |
+
+---
+
+## Programas de importación compatibles
+
+| Programa | Detección automática |
+|---|---|
+| Salfon (Saltoki) | Sí |
+| Contaplus / Contawin | Sí |
+| a3factura (Wolters Kluwer) | Sí |
+| Holded | Sí |
+| Billin | Sí |
+| Quipu | Sí |
+| FacturaDirecta | Sí |
+| Debitoor / SumUp | Parcial |
+| Cualquier CSV genérico | Sí (por sinónimos) |
 
 ---
 
