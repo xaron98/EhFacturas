@@ -199,7 +199,7 @@ final class Cliente {
     var telefono: String = ""
     var email: String = ""
     var observaciones: String = ""
-    @Relationship(deleteRule: .deny, inverse: \Factura.cliente)
+    @Relationship(deleteRule: .nullify, inverse: \Factura.cliente)
     var facturas: [Factura] = []
     var fechaCreacion: Date = Date.now
     var fechaModificacion: Date = Date.now
@@ -276,7 +276,7 @@ final class Articulo {
     var activo: Bool = true
     var fechaCreacion: Date = Date.now
     var fechaModificacion: Date = Date.now
-    @Relationship(deleteRule: .deny, inverse: \LineaFactura.articulo)
+    @Relationship(deleteRule: .nullify, inverse: \LineaFactura.articulo)
     var lineasFactura: [LineaFactura] = []
 
     init(referencia: String = "", nombre: String = "", descripcion: String = "",
@@ -330,7 +330,9 @@ final class Factura {
     var fechaCreacion: Date = Date.now
     var fechaModificacion: Date = Date.now
     var tipoFactura: TipoFacturaVF = TipoFacturaVF.completa
+    @Relationship(inverse: \Factura.facturasRectificativas)
     var facturaRectificada: Factura?
+    var facturasRectificativas: [Factura] = []
     @Relationship(deleteRule: .cascade, inverse: \RegistroFacturacion.factura)
     var registros: [RegistroFacturacion] = []
 
