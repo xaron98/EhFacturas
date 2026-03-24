@@ -28,6 +28,8 @@ struct MensajeChat: Identifiable {
 
 struct VoiceMainView: View {
 
+    // Note: modelContext from @Environment is used for UI operations.
+    // CommandAIService receives its own context via init for IA operations.
     @Environment(\.modelContext) private var modelContext
     @StateObject private var speech = SpeechService()
     @StateObject private var aiService: CommandAIService
@@ -253,6 +255,7 @@ struct VoiceMainView: View {
                     .font(.title3)
                     .foregroundStyle(.secondary)
             }
+            .accessibilityLabel("Gestión manual")
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 10)
@@ -313,6 +316,8 @@ struct VoiceMainView: View {
                 }
             }
             .buttonStyle(.plain)
+            .accessibilityLabel(speech.estaEscuchando ? "Detener grabación" : "Activar micrófono")
+            .accessibilityHint("Pulsa para hablar un comando")
 
             // Examples
             VStack(spacing: 8) {
@@ -511,6 +516,8 @@ struct VoiceMainView: View {
                 }
             }
             .buttonStyle(.plain)
+            .accessibilityLabel(speech.estaEscuchando ? "Detener grabación" : "Activar micrófono")
+            .accessibilityHint("Pulsa para hablar un comando")
             .disabled(procesando)
         }
         .padding(.horizontal, 16)

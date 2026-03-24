@@ -112,17 +112,25 @@ enum VeriFactuHashService {
 
     // MARK: - Formateo
 
-    private static func formatFecha(_ date: Date) -> String {
+    private static let fechaFormatter: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "dd-MM-yyyy"
-        return f.string(from: date)
-    }
+        return f
+    }()
 
-    private static func formatTimestamp(_ date: Date) -> String {
+    private static let timestampFormatter: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "dd-MM-yyyy HH:mm:ssZZZZZ"
         f.locale = Locale(identifier: "es_ES")
         f.timeZone = TimeZone.current
-        return f.string(from: date)
+        return f
+    }()
+
+    private static func formatFecha(_ date: Date) -> String {
+        fechaFormatter.string(from: date)
+    }
+
+    private static func formatTimestamp(_ date: Date) -> String {
+        timestampFormatter.string(from: date)
     }
 }

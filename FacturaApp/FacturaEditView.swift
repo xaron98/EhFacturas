@@ -21,6 +21,8 @@ struct FacturaEditView: View {
     @State private var xmlDataParaCompartir: Data?
     @State private var refreshTrigger = 0
     @State private var confirmarEmision = false
+    @State private var mostrarErrorNegocio = false
+    @State private var generandoPDF = false
 
     private var esEditable: Bool {
         factura.estado == .borrador
@@ -144,6 +146,11 @@ struct FacturaEditView: View {
             } message: {
                 Text("Una vez emitida, no se podrá modificar.")
             }
+            .alert("Datos del negocio", isPresented: $mostrarErrorNegocio) {
+                Button("OK") { }
+            } message: {
+                Text("Configura los datos de tu negocio en Ajustes antes de generar el PDF.")
+            }
         }
     }
 
@@ -181,8 +188,13 @@ struct FacturaEditView: View {
         Section {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
-                    miniBoton(titulo: "PDF", icono: "doc.richtext", color: .blue) {
-                        generarPDF()
+                    if generandoPDF {
+                        ProgressView()
+                            .frame(width: 60, height: 50)
+                    } else {
+                        miniBoton(titulo: "PDF", icono: "doc.richtext", color: .blue) {
+                            generarPDF()
+                        }
                     }
 
                     if factura.estado != .borrador && !factura.registros.isEmpty {
@@ -424,17 +436,26 @@ struct FacturaEditView: View {
     }
 
     private func generarPDF() {
+        generandoPDF = true
         let descriptor = FetchDescriptor<Negocio>()
-        guard let negocio = (try? modelContext.fetch(descriptor))?.first else { return }
+        guard let negocio = (try? modelContext.fetch(descriptor))?.first else {
+            mostrarErrorNegocio = true
+            generandoPDF = false
+            return
+        }
         let data = FacturaPDFGenerator.generar(factura: factura, negocio: negocio)
         factura.pdfData = data
         try? modelContext.save()
+        generandoPDF = false
         mostrarPDF = true
     }
 
     private func generarXML() {
         let desc = FetchDescriptor<Negocio>()
-        guard let negocio = try? modelContext.fetch(desc).first else { return }
+        guard let negocio = try? modelContext.fetch(desc).first else {
+            mostrarErrorNegocio = true
+            return
+        }
         guard let registro = factura.registros.sorted(by: { $0.fechaHoraGeneracion > $1.fechaHoraGeneracion }).first else { return }
         let xml = VeriFactuXMLGenerator.generarXMLRegistro(registro: registro, negocio: negocio)
         if let data = xml.data(using: .utf8) {

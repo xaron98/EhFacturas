@@ -259,21 +259,29 @@ enum VeriFactuXMLGenerator {
 
     // MARK: - Helpers
 
-    /// Formatea una fecha en formato dd-MM-yyyy (formato VeriFactu XSD).
-    static func formatFechaXSD(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "dd-MM-yyyy"
-        formatter.locale = Locale(identifier: "es_ES")
-        return formatter.string(from: date)
-    }
+    private static let fechaXSDFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "dd-MM-yyyy"
+        f.locale = Locale(identifier: "es_ES")
+        return f
+    }()
 
-    /// Formatea una fecha con hora y huso horario en formato dd-MM-yyyy HH:mm:ss±HH:MM (formato VeriFactu XSD).
-    static func formatTimestampXSD(_ date: Date) -> String {
+    private static let timestampXSDFormatter: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "dd-MM-yyyy HH:mm:ssZZZZZ"
         f.locale = Locale(identifier: "es_ES")
         f.timeZone = TimeZone.current
-        return f.string(from: date)
+        return f
+    }()
+
+    /// Formatea una fecha en formato dd-MM-yyyy (formato VeriFactu XSD).
+    static func formatFechaXSD(_ date: Date) -> String {
+        fechaXSDFormatter.string(from: date)
+    }
+
+    /// Formatea una fecha con hora y huso horario en formato dd-MM-yyyy HH:mm:ss±HH:MM (formato VeriFactu XSD).
+    static func formatTimestampXSD(_ date: Date) -> String {
+        timestampXSDFormatter.string(from: date)
     }
 
     /// Formatea un importe con 2 decimales, sin símbolo de moneda.
