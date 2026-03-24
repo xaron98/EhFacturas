@@ -43,17 +43,15 @@ struct FacturasListView: View {
     }
     private var totalEsteMes: Double {
         let cal = Calendar.current
-        let inicio = cal.date(from: cal.dateComponents([.year, .month], from: .now))!
+        let inicio = cal.date(from: cal.dateComponents([.year, .month], from: .now)) ?? .now
         return facturas.filter { $0.fecha >= inicio }.reduce(0) { $0 + $1.totalFactura }
     }
 
     private var facturasVencenPronto: [Factura] {
-        let tresDias = Calendar.current.date(byAdding: .day, value: 3, to: .now)!
+        let tresDias = Calendar.current.date(byAdding: .day, value: 3, to: .now) ?? .now
         return facturas.filter {
-            $0.estado == .emitida &&
-            $0.fechaVencimiento != nil &&
-            $0.fechaVencimiento! <= tresDias &&
-            $0.fechaVencimiento! > .now
+            guard $0.estado == .emitida, let venc = $0.fechaVencimiento else { return false }
+            return venc <= tresDias && venc > .now
         }
     }
 

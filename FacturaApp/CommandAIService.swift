@@ -268,8 +268,11 @@ struct CrearFacturaTool: Tool, @unchecked Sendable {
         let todosArticulos = (try? modelContext.fetch(articulosDesc)) ?? []
 
         // Crear factura
+        let numeroFactura = negocio.generarNumeroFactura()
+        try? modelContext.save()  // Persist incremented number immediately
+
         let factura = Factura(
-            numeroFactura: negocio.generarNumeroFactura(),
+            numeroFactura: numeroFactura,
             cliente: cliente,
             estado: .borrador,
             descuentoGlobalPorcentaje: arguments.descuento,

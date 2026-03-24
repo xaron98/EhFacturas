@@ -14,6 +14,10 @@ enum VeriFactuXMLSigner {
     /// Proceso: 1) Canonicalizar XML, 2) Calcular digest SHA-256,
     /// 3) Construir SignedInfo, 4) Canonicalizar SignedInfo,
     /// 5) Firmar con RSA-SHA256, 6) Insertar Signature en el XML.
+    // WARNING: This implementation uses a simplified XML canonicalization that may not
+    // comply with W3C Canonical XML 1.0 (C14N). AEAT may reject signatures produced by
+    // this code. Do not enable in production until validated against AEAT's test environment.
+    // The Signature element is optional in the VeriFactu XSD (minOccurs="0").
     static func firmarXML(_ xml: String) -> String {
         guard let identity = VeriFactuCertificateManager.obtenerIdentidad() else {
             return xml // Sin certificado, devolver sin firmar

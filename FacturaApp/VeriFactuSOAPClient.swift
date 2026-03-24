@@ -14,7 +14,7 @@ final class VeriFactuSOAPClient: NSObject, ObservableObject {
 
     @Published var enviando = false
 
-    nonisolated(unsafe) private var credential: URLCredential?
+    private var credential: URLCredential?
     private override init() { super.init() }
 
     // MARK: - Enviar un registro
@@ -39,8 +39,9 @@ final class VeriFactuSOAPClient: NSObject, ObservableObject {
             return
         }
 
-        let xmlSinFirma = VeriFactuXMLGenerator.generarXMLRegistro(registro: registro, negocio: negocio)
-        let xml = VeriFactuXMLSigner.firmarXML(xmlSinFirma)
+        let xml = VeriFactuXMLGenerator.generarXMLRegistro(registro: registro, negocio: negocio)
+        // Note: XML signing disabled until C14N implementation is validated with AEAT
+        // let xml = VeriFactuXMLSigner.firmarXML(xmlSinFirma)
         let endpoint = negocio.usarEntornoPruebas ? Self.endpointPruebas : Self.endpointProduccion
 
         guard let url = URL(string: endpoint) else { return }
@@ -137,7 +138,16 @@ final class SOAPSessionDelegate: NSObject, URLSessionDelegate, @unchecked Sendab
 
         if challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
            let trust = challenge.protectionSpace.serverTrust {
-            return (.useCredential, URLCredential(trust: trust))
+            // Only accept AEAT domains
+            let host = challenge.protectionSpace.host
+            if host.hasSuffix("agenciatributaria.gob.es") || host.hasSuffix("aeat.es") {
+                var error: CFError?
+                let isValid = SecTrustEvaluateWithError(trust, &error)
+                if isValid {
+                    return (.useCredential, URLCredential(trust: trust))
+                }
+            }
+            return (.performDefaultHandling, nil)
         }
 
         return (.performDefaultHandling, nil)

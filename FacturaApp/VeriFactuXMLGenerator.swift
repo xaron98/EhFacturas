@@ -82,11 +82,12 @@ enum VeriFactuXMLGenerator {
         if registro.tipoFactura == .rectificativa {
             xml += "          <sf:TipoRectificativa>I</sf:TipoRectificativa>\n"
             if let numRectificada = registro.facturaRectificadaNumero, !numRectificada.isEmpty {
+                let fechaOriginal = registro.factura?.facturaRectificada.map { formatFechaXSD($0.fecha) } ?? fechaExp
                 xml += "          <sf:FacturasRectificadas>\n"
                 xml += "            <sf:IDFacturaRectificada>\n"
                 xml += "              <sf:IDEmisorFactura>\(escaparXML(registro.nifEmisor))</sf:IDEmisorFactura>\n"
                 xml += "              <sf:NumSerieFactura>\(escaparXML(numRectificada))</sf:NumSerieFactura>\n"
-                xml += "              <sf:FechaExpedicionFactura>\(fechaExp)</sf:FechaExpedicionFactura>\n"
+                xml += "              <sf:FechaExpedicionFactura>\(fechaOriginal)</sf:FechaExpedicionFactura>\n"
                 xml += "            </sf:IDFacturaRectificada>\n"
                 xml += "          </sf:FacturasRectificadas>\n"
             }

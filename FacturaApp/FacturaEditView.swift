@@ -186,14 +186,11 @@ struct FacturaEditView: View {
 
                     if factura.estado == .borrador {
                         miniBoton(titulo: "Emitir", icono: "paperplane", color: .green) {
-                            factura.estado = .emitida
-                            factura.fechaModificacion = .now
-                            try? modelContext.save()
-                            refreshTrigger += 1
+                            emitirFacturaDesdeEditor()
                         }
                     }
 
-                    if factura.estado == .borrador || factura.estado == .emitida {
+                    if factura.estado == .emitida {
                         miniBoton(titulo: "Cobrar", icono: "banknote", color: .orange) {
                             factura.estado = .pagada
                             factura.fechaModificacion = .now
@@ -384,6 +381,28 @@ struct FacturaEditView: View {
 
         Task {
             await editAI.procesarComando(cmd)
+        }
+    }
+
+    private func emitirFacturaDesdeEditor() {
+        let desc = FetchDescriptor<Negocio>()
+        guard let negocio = try? modelContext.fetch(desc).first else { return }
+        let registro = VeriFactuHashService.crearRegistroAlta(factura: factura, negocio: negocio, modelContext: modelContext)
+        factura.estado = .emitida
+        factura.fechaModificacion = .now
+        try? modelContext.save()
+        refreshTrigger += 1
+
+        // Auto-send if enabled
+        if negocio.envioAutomatico {
+            Task {
+                await VeriFactuSOAPClient.shared.enviarRegistro(
+                    registro: registro,
+                    negocio: negocio,
+                    modelContext: modelContext
+                )
+                refreshTrigger += 1
+            }
         }
     }
 

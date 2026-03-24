@@ -61,8 +61,8 @@ enum VeriFactuCertificateManager {
         ]
         var result: CFTypeRef?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
-        guard status == errSecSuccess, result != nil else { return nil }
-        return (result as! SecIdentity)
+        guard status == errSecSuccess, let ref = result else { return nil }
+        return (ref as! SecIdentity)
     }
 
     // MARK: - Estado
