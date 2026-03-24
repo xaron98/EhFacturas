@@ -22,6 +22,9 @@ struct AjustesView: View {
     @State private var certificadoError: String?
     @State private var certificadoExito = false
     @State private var mostrarEventLog = false
+    @State private var mostrarAPIKeyInput = false
+    @State private var apiKeyTexto = ""
+    @State private var mostrarSuscripcion = false
 
     var body: some View {
         if let negocio = negocios.first {
@@ -177,6 +180,63 @@ struct AjustesView: View {
                 Text("Crea las categorías predefinidas si no existen.")
             }
 
+            // Inteligencia Artificial
+            Section {
+                // Active provider indicator
+                HStack {
+                    Image(systemName: providerIcon)
+                        .foregroundStyle(providerColor)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Proveedor activo")
+                            .font(.subheadline)
+                        Text(providerName)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                // Cloud provider picker
+                Picker("Proveedor cloud preferido", selection: Binding(
+                    get: { negocio.cloudProvider },
+                    set: { negocio.cloudProvider = $0; try? modelContext.save() }
+                )) {
+                    Text("Claude (Anthropic)").tag("claude")
+                    Text("OpenAI (GPT-4o-mini)").tag("openai")
+                }
+
+                // Dev mode: direct API key
+                if !SubscriptionManager.shared.isProSubscriber {
+                    Button {
+                        mostrarAPIKeyInput = true
+                    } label: {
+                        Label("Introducir API key (desarrollo)", systemImage: "key")
+                    }
+                    .font(.subheadline)
+                }
+
+                // Subscription status
+                HStack {
+                    Text("Suscripción")
+                    Spacer()
+                    Text(SubscriptionManager.shared.isProSubscriber ? "Pro activo" : "Gratuito")
+                        .font(.subheadline)
+                        .foregroundStyle(SubscriptionManager.shared.isProSubscriber ? .green : .secondary)
+                }
+
+                if !SubscriptionManager.shared.isProSubscriber {
+                    Button {
+                        mostrarSuscripcion = true
+                    } label: {
+                        Label("Obtener Pro", systemImage: "star.fill")
+                            .foregroundStyle(.blue)
+                    }
+                }
+            } header: {
+                Text("Inteligencia Artificial")
+            } footer: {
+                Text("Apple Intelligence es gratuito en dispositivos compatibles. Claude y OpenAI requieren suscripción Pro.")
+            }
+
             // VeriFactu
             Section {
                 if VeriFactuCertificateManager.certificadoInstalado {
@@ -319,6 +379,48 @@ struct AjustesView: View {
         .sheet(isPresented: $mostrarEventLog) {
             EventLogView()
         }
+        .alert("API Key (desarrollo)", isPresented: $mostrarAPIKeyInput) {
+            TextField("sk-...", text: $apiKeyTexto)
+            Button("Guardar") {
+                if !apiKeyTexto.isEmpty {
+                    APIKeyManager.shared.setDirectAPIKey(apiKeyTexto)
+                    apiKeyTexto = ""
+                }
+            }
+            Button("Cancelar", role: .cancel) { apiKeyTexto = "" }
+        } message: {
+            Text("Introduce tu API key de Claude o OpenAI para pruebas.")
+        }
+        .sheet(isPresented: $mostrarSuscripcion) {
+            SubscriptionView()
+        }
+    }
+
+    private var providerIcon: String {
+        #if canImport(FoundationModels)
+        if #available(iOS 26, *) {
+            return "apple.intelligence"
+        }
+        #endif
+        return "cloud.fill"
+    }
+
+    private var providerColor: Color {
+        #if canImport(FoundationModels)
+        if #available(iOS 26, *) {
+            return .green
+        }
+        #endif
+        return .blue
+    }
+
+    private var providerName: String {
+        #if canImport(FoundationModels)
+        if #available(iOS 26, *) {
+            return "Apple Intelligence (on-device)"
+        }
+        #endif
+        return negocios.first?.cloudProvider == "claude" ? "Claude (Anthropic)" : "OpenAI (GPT-4o-mini)"
     }
 
     private func infoRow(_ label: String, _ value: String) -> some View {
@@ -596,5 +698,92 @@ struct OnboardingView: View {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { _, _ in }
 
         dismiss()
+    }
+}
+
+// MARK: - Suscripción Pro
+
+struct SubscriptionView: View {
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 20) {
+                Spacer()
+
+                Image(systemName: "star.circle.fill")
+                    .font(.system(size: 60))
+                    .foregroundStyle(.blue.gradient)
+
+                Text("FacturaApp Pro")
+                    .font(.title2)
+                    .fontWeight(.bold)
+
+                Text("Accede a la IA por voz en todos los dispositivos, incluso sin Apple Intelligence.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+
+                VStack(spacing: 12) {
+                    if let monthly = SubscriptionManager.shared.monthlyProduct {
+                        Button {
+                            Task {
+                                _ = try? await SubscriptionManager.shared.purchase(monthly)
+                            }
+                        } label: {
+                            HStack {
+                                Text("Mensual")
+                                Spacer()
+                                Text(monthly.displayPrice + "/mes")
+                                    .fontWeight(.semibold)
+                            }
+                            .padding()
+                            .background(.blue)
+                            .foregroundStyle(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                        }
+                    }
+
+                    if let yearly = SubscriptionManager.shared.yearlyProduct {
+                        Button {
+                            Task {
+                                _ = try? await SubscriptionManager.shared.purchase(yearly)
+                            }
+                        } label: {
+                            HStack {
+                                Text("Anual")
+                                Spacer()
+                                Text(yearly.displayPrice + "/año")
+                                    .fontWeight(.semibold)
+                            }
+                            .padding()
+                            .background(.blue.opacity(0.15))
+                            .foregroundStyle(.blue)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                        }
+                    }
+                }
+                .padding(.horizontal, 30)
+
+                Button("Restaurar compras") {
+                    Task { await SubscriptionManager.shared.restorePurchases() }
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+                Spacer()
+            }
+            .navigationTitle("Suscripción")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Cerrar") { dismiss() }
+                }
+            }
+            .task {
+                await SubscriptionManager.shared.loadProducts()
+            }
+        }
     }
 }
