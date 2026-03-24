@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Para crear facturas, clientes y artículos con tu voz</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Para escuchar tus comandos de voz</string>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>es.facturaapp.check-vencimientos</string>
+	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+	</array>
+</dict>
+</plist>
