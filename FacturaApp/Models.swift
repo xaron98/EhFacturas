@@ -546,7 +546,11 @@ enum DataConfig {
             EventoSIF.self,
             PerfilImportacion.self
         ])
-        let config = ModelConfiguration("FacturaApp", isStoredInMemoryOnly: false)
+        let config = ModelConfiguration(
+            "FacturaApp",
+            isStoredInMemoryOnly: false,
+            cloudKitDatabase: .private("iCloud.es.facturaapp.FacturaApp")
+        )
         do {
             return try ModelContainer(for: schema, configurations: config)
         } catch {
