@@ -543,7 +543,8 @@ enum DataConfig {
             Factura.self,
             LineaFactura.self,
             RegistroFacturacion.self,
-            EventoSIF.self
+            EventoSIF.self,
+            PerfilImportacion.self
         ])
         let config = ModelConfiguration("FacturaApp", isStoredInMemoryOnly: false)
         do {

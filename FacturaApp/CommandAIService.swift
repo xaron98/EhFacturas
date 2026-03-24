@@ -27,7 +27,8 @@ struct ComandoResultado {
         case listaClientes
         case listaArticulos
         case listaFacturas
-        case informacion                    // Respuesta informativa sin acción
+        case importarSolicitado
+        case informacion
         case error
     }
 }
@@ -580,6 +581,30 @@ struct ConsultarResumenTool: Tool, @unchecked Sendable {
     }
 }
 
+/// Tool: Solicitar importación de datos CSV.
+struct ImportarDatosTool: Tool, @unchecked Sendable {
+    let name = "importar_datos"
+    let description = """
+        Abre el importador de datos CSV/Excel. Usa esta herramienta cuando el usuario \
+        quiera importar artículos o clientes desde un archivo, CSV, o desde otro programa \
+        como Salfon, Contaplus, Holded, etc. \
+        Ejemplo: "Importa artículos de Salfon" o "Carga clientes desde un archivo"
+        """
+
+    @Generable
+    struct Arguments {
+        @Guide(description: "Tipo de datos a importar", .anyOf(["articulos", "clientes"]))
+        var tipo: String
+    }
+
+    let modelContext: ModelContext
+
+    func call(arguments: Arguments) async throws -> String {
+        let tipo = arguments.tipo == "clientes" ? "clientes" : "articulos"
+        return "IMPORTAR_\(tipo.uppercased())"
+    }
+}
+
 /// Tool: Configurar datos del negocio (onboarding por voz).
 struct ConfigurarNegocioTool: Tool, @unchecked Sendable {
     let name = "configurar_negocio"
@@ -662,6 +687,7 @@ final class CommandAIService: ObservableObject {
     @Published var estado: Estado = .listo
     @Published var ultimaRespuesta: ComandoResultado?
     @Published var historial: [EntradaHistorial] = []
+    @Published var solicitarImportacion: TipoImportacion?
 
     enum Estado: Equatable {
         case listo
@@ -697,6 +723,7 @@ final class CommandAIService: ObservableObject {
                 CrearFacturaTool(modelContext: modelContext),
                 MarcarPagadaTool(modelContext: modelContext),
                 AnularFacturaTool(modelContext: modelContext),
+                ImportarDatosTool(modelContext: modelContext),
                 ConsultarResumenTool(modelContext: modelContext)
             ]
         ) {
@@ -731,6 +758,7 @@ final class CommandAIService: ObservableObject {
             - Si no especifica observaciones, deja vacío. NO preguntes.
             - "mi NIF es..." o "mi teléfono es..." → usa configurar_negocio para actualizar.
             - "anula la factura de Juan" o "borra la última factura" → usa anular_factura.
+            - "importa artículos de Salfon" o "carga clientes desde CSV" → usa importar_datos con tipo "articulos" o "clientes".
             - Las facturas emitidas NO se pueden modificar → "Rectificar" en la vista de factura.
             - Después de ejecutar, confirma en UNA frase corta. No preguntes si quiere algo más.
             """
@@ -843,6 +871,16 @@ final class CommandAIService: ObservableObject {
     private func determinarAccion(respuesta: String, comando: String) -> ComandoResultado.AccionRealizada {
         let r = respuesta.lowercased()
         let c = comando.lowercased()
+
+        // Detectar importación
+        if respuesta.contains("IMPORTAR_ARTICULOS") {
+            solicitarImportacion = .articulos
+            return .importarSolicitado
+        }
+        if respuesta.contains("IMPORTAR_CLIENTES") {
+            solicitarImportacion = .clientes
+            return .importarSolicitado
+        }
 
         if r.contains("cliente") && (r.contains("creado") || r.contains("añadido") || r.contains("dado de alta")) {
             return .clienteCreado

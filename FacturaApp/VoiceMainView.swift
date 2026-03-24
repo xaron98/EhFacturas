@@ -40,6 +40,8 @@ struct VoiceMainView: View {
     @State private var procesando = false
     @State private var permisosComprobados = false
     @State private var facturaParaEditar: Factura?
+    @State private var tipoImportacion: TipoImportacion?
+    @State private var mostrarImportador = false
 
     private var hayNegocio: Bool { !negocios.isEmpty }
 
@@ -161,6 +163,16 @@ struct VoiceMainView: View {
         }
         .sheet(item: $facturaParaEditar) { factura in
             FacturaEditView(factura: factura)
+        }
+        .sheet(isPresented: $mostrarImportador) {
+            ImportarView(tipo: tipoImportacion ?? .articulos)
+        }
+        .onChange(of: aiService.solicitarImportacion) { _, tipo in
+            if let tipo {
+                tipoImportacion = tipo
+                mostrarImportador = true
+                aiService.solicitarImportacion = nil
+            }
         }
     }
 
@@ -520,6 +532,7 @@ struct VoiceMainView: View {
         case .listaClientes: return "person.2"
         case .listaArticulos: return "shippingbox"
         case .listaFacturas: return "doc.text"
+        case .importarSolicitado: return "arrow.down.doc"
         case .informacion: return "info.circle"
         case .error: return "exclamationmark.triangle"
         }
@@ -547,6 +560,7 @@ struct VoiceMainView: View {
         case .listaClientes: return "Clientes"
         case .listaArticulos: return "Artículos"
         case .listaFacturas: return "Facturas"
+        case .importarSolicitado: return "Importar datos"
         case .informacion: return "Información"
         case .error: return "Error"
         }
