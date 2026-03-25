@@ -208,6 +208,24 @@ enum CloudToolSchemas {
             ] as [String: Any]
         ],
         [
+            "name": "registrar_gasto",
+            "description": """
+                Registra un gasto o compra del negocio. Usa esta herramienta cuando el usuario diga que ha \
+                comprado algo, ha tenido un gasto, o quiera registrar una compra. \
+                Ejemplo: "He comprado material por 50 euros" o "Gasto de gasolina 30 euros"
+                """,
+            "input_schema": [
+                "type": "object",
+                "properties": [
+                    "concepto": ["type": "string", "description": "Concepto del gasto"],
+                    "importe": ["type": "number", "description": "Importe en euros"],
+                    "categoria": ["type": "string", "description": "Categoria: material, herramientas, vehiculo, oficina, formacion, seguros, otros", "enum": ["material", "herramientas", "vehiculo", "oficina", "formacion", "seguros", "otros"]],
+                    "proveedor": ["type": "string", "description": "Proveedor. Vacio si no se da."]
+                ] as [String: Any],
+                "required": ["concepto", "importe"]
+            ] as [String: Any]
+        ],
+        [
             "name": "deshacer",
             "description": """
                 Deshace la última acción (crear cliente, artículo o factura). \
@@ -502,6 +520,27 @@ enum CloudToolSchemas {
         [
             "type": "function",
             "function": [
+                "name": "registrar_gasto",
+                "description": """
+                    Registra un gasto o compra del negocio. Usa esta herramienta cuando el usuario diga que ha \
+                    comprado algo, ha tenido un gasto, o quiera registrar una compra. \
+                    Ejemplo: "He comprado material por 50 euros" o "Gasto de gasolina 30 euros"
+                    """,
+                "parameters": [
+                    "type": "object",
+                    "properties": [
+                        "concepto": ["type": "string", "description": "Concepto del gasto"],
+                        "importe": ["type": "number", "description": "Importe en euros"],
+                        "categoria": ["type": "string", "description": "Categoria: material, herramientas, vehiculo, oficina, formacion, seguros, otros", "enum": ["material", "herramientas", "vehiculo", "oficina", "formacion", "seguros", "otros"]],
+                        "proveedor": ["type": "string", "description": "Proveedor. Vacio si no se da."]
+                    ] as [String: Any],
+                    "required": ["concepto", "importe"]
+                ] as [String: Any]
+            ] as [String: Any]
+        ],
+        [
+            "type": "function",
+            "function": [
                 "name": "deshacer",
                 "description": """
                     Deshace la última acción (crear cliente, artículo o factura). \
@@ -713,6 +752,17 @@ extension CloudToolSchemas {
             return FacturaActions.consultarResumen(
                 ConsultarResumenParams(
                     tipo: arguments["tipo"] as? String ?? "general"
+                ),
+                modelContext: modelContext
+            )
+
+        case "registrar_gasto":
+            return FacturaActions.registrarGasto(
+                RegistrarGastoParams(
+                    concepto: arguments["concepto"] as? String ?? "",
+                    importe: arguments["importe"] as? Double ?? 0,
+                    categoria: arguments["categoria"] as? String ?? "otros",
+                    proveedor: arguments["proveedor"] as? String ?? ""
                 ),
                 modelContext: modelContext
             )

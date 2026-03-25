@@ -8,6 +8,7 @@ import Charts
 struct InformesView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Factura.fecha, order: .reverse) private var facturas: [Factura]
+    @Query(sort: \Gasto.fecha, order: .reverse) private var todosGastos: [Gasto]
     @State private var periodoSeleccionado: Periodo = .trimestre
     @State private var mostrarExport = false
     @State private var csvData: Data?
@@ -19,22 +20,28 @@ struct InformesView: View {
         case todo = "Todo"
     }
 
-    private var facturasFiltradas: [Factura] {
-        let inicio: Date
+    private var fechaInicio: Date {
         let cal = Calendar.current
         switch periodoSeleccionado {
         case .mes:
-            inicio = cal.date(from: cal.dateComponents([.year, .month], from: .now)) ?? .now
+            return cal.date(from: cal.dateComponents([.year, .month], from: .now)) ?? .now
         case .trimestre:
             let month = cal.component(.month, from: .now)
             let quarterStart = ((month - 1) / 3) * 3 + 1
-            inicio = cal.date(from: DateComponents(year: cal.component(.year, from: .now), month: quarterStart)) ?? .now
+            return cal.date(from: DateComponents(year: cal.component(.year, from: .now), month: quarterStart)) ?? .now
         case .ano:
-            inicio = cal.date(from: DateComponents(year: cal.component(.year, from: .now))) ?? .now
+            return cal.date(from: DateComponents(year: cal.component(.year, from: .now))) ?? .now
         case .todo:
-            inicio = .distantPast
+            return .distantPast
         }
-        return facturas.filter { $0.fecha >= inicio && $0.estado != .anulada && $0.estado != .presupuesto }
+    }
+
+    private var facturasFiltradas: [Factura] {
+        return facturas.filter { $0.fecha >= fechaInicio && $0.estado != .anulada && $0.estado != .presupuesto }
+    }
+
+    private var gastosDelPeriodo: Double {
+        todosGastos.filter { $0.fecha >= fechaInicio }.reduce(0) { $0 + $1.importe }
     }
 
     // MARK: - Computed stats
@@ -118,6 +125,10 @@ struct InformesView: View {
                     statRow("IRPF retenido", totalIRPF, color: .red)
                 }
                 statRow("Beneficio neto", beneficioNeto, color: .purple)
+                if gastosDelPeriodo > 0 {
+                    statRow("Gastos", gastosDelPeriodo, color: .red)
+                    statRow("Beneficio real", beneficioNeto - gastosDelPeriodo, color: .mint)
+                }
                 HStack {
                     Text("Facturas emitidas")
                     Spacer()

@@ -98,6 +98,13 @@ struct CrearRecurrenteParams {
     var importe: Double
 }
 
+struct RegistrarGastoParams {
+    var concepto: String
+    var importe: Double
+    var categoria: String
+    var proveedor: String
+}
+
 // MARK: - Undo tracking
 
 struct UltimaAccion {
@@ -476,6 +483,20 @@ enum FacturaActions {
         try? modelContext.save()
 
         return "Factura recurrente creada: \(rec.nombre) por \(Formateadores.formatEuros(params.importe)) (\(params.frecuencia))."
+    }
+
+    // MARK: - registrarGasto
+
+    static func registrarGasto(_ params: RegistrarGastoParams, modelContext: ModelContext) -> String {
+        let gasto = Gasto(
+            concepto: params.concepto,
+            importe: params.importe,
+            categoria: params.categoria.isEmpty ? "otros" : params.categoria,
+            proveedor: params.proveedor
+        )
+        modelContext.insert(gasto)
+        try? modelContext.save()
+        return "Gasto registrado: \(params.concepto) por \(Formateadores.formatEuros(params.importe))."
     }
 
     // MARK: - deshacerUltimaAccion

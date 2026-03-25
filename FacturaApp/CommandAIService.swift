@@ -197,6 +197,7 @@ final class CommandAIService: ObservableObject {
         - "¿cuánto he facturado este trimestre?" o "informe" → usa consultar_resumen con tipo "general".
         - "exporta las facturas" → dile al usuario que vaya a la bandeja → Informes → Exportar.
         - Las facturas emitidas NO se pueden modificar → "Rectificar" en la vista de factura.
+        - "he comprado X por Y€" o "gasto de X" → usa registrar_gasto.
         - "deshaz lo último" o "deshacer" → usa deshacer.
         - "no, quería decir X" → si se refiere a la última acción, primero deshaz y luego ejecuta la corrección.
         - Si el usuario pide varias cosas en un solo mensaje ("crea un cliente y hazle una factura"), ejecuta cada acción en orden usando las herramientas correspondientes.
@@ -243,6 +244,9 @@ final class CommandAIService: ObservableObject {
         }
         if r.contains("encontrado") && (c.contains("artículo") || c.contains("producto")) {
             return .articuloEncontrado
+        }
+        if r.contains("gasto") && r.contains("registrado") {
+            return .informacion
         }
         if r.contains("deshecho") || r.contains("deshecha") || r.contains("deshacer") {
             return .informacion

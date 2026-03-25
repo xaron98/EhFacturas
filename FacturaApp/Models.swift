@@ -600,6 +600,30 @@ final class PlantillaFactura {
     }
 }
 
+// MARK: - Gasto
+
+@Model
+final class Gasto {
+    var concepto: String = ""
+    var importe: Double = 0
+    var fecha: Date = Date.now
+    var categoria: String = ""  // "material", "herramientas", "vehiculo", "oficina", "otros"
+    var proveedor: String = ""
+    var deducibleIVA: Bool = true
+    var importeIVA: Double = 0
+    var observaciones: String = ""
+    var fechaCreacion: Date = Date.now
+
+    init(concepto: String, importe: Double, categoria: String = "otros", proveedor: String = "", deducibleIVA: Bool = true, importeIVA: Double = 0) {
+        self.concepto = concepto
+        self.importe = importe
+        self.categoria = categoria
+        self.proveedor = proveedor
+        self.deducibleIVA = deducibleIVA
+        self.importeIVA = importeIVA
+    }
+}
+
 // MARK: - DataConfig (ModelContainer)
 
 enum DataConfig {
@@ -614,7 +638,8 @@ enum DataConfig {
         EventoSIF.self,
         PerfilImportacion.self,
         FacturaRecurrente.self,
-        PlantillaFactura.self
+        PlantillaFactura.self,
+        Gasto.self
     ])
 
     static let container: ModelContainer = {

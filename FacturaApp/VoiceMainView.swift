@@ -45,6 +45,7 @@ struct VoiceMainView: View {
     @State private var tipoImportacion: TipoImportacion?
     @State private var mostrarImportador = false
     @State private var currentTask: Task<Void, Never>?
+    @State private var mostrarScanner = false
 
     private var hayNegocio: Bool { !negocios.isEmpty }
 
@@ -179,6 +180,11 @@ struct VoiceMainView: View {
         }
         .sheet(isPresented: $mostrarImportador) {
             ImportarView(tipo: tipoImportacion ?? .articulos)
+        }
+        .sheet(isPresented: $mostrarScanner) {
+            ScannerView { texto in
+                enviarComando(texto)
+            }
         }
         .onChange(of: aiService.solicitarImportacion) { _, tipo in
             if let tipo {
@@ -493,6 +499,18 @@ struct VoiceMainView: View {
                 }
             }
 
+            // Botón escáner
+            Button {
+                mostrarScanner = true
+            } label: {
+                Image(systemName: "camera.viewfinder")
+                    .font(.system(size: 16))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 36, height: 36)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Escanear documento")
+
             // Botón micrófono
             Button {
                 if speech.estaEscuchando {
@@ -598,6 +616,7 @@ struct BandejaManualView: View {
         case facturas = "Facturas"
         case clientes = "Clientes"
         case articulos = "Artículos"
+        case gastos = "Gastos"
         case informes = "Informes"
         case ajustes = "Ajustes"
     }
@@ -622,6 +641,8 @@ struct BandejaManualView: View {
                         ClientesListView()
                     case .articulos:
                         ArticulosListView()
+                    case .gastos:
+                        GastosView()
                     case .informes:
                         InformesView()
                     case .ajustes:

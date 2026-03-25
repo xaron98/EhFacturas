@@ -6,6 +6,8 @@
 	<string>Para crear facturas, clientes y artículos con tu voz</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Para escuchar tus comandos de voz</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Para escanear tickets y documentos con la camara</string>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
 		<string>es.facturaapp.check-vencimientos</string>

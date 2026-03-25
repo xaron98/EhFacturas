@@ -384,6 +384,7 @@
 				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = FacturaApp;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Para escanear tickets y documentos con la camara";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Para escuchar tus comandos de voz";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Para crear facturas, clientes y artículos con tu voz";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -422,6 +423,7 @@
 				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = FacturaApp;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Para escanear tickets y documentos con la camara";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Para escuchar tus comandos de voz";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Para crear facturas, clientes y artículos con tu voz";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

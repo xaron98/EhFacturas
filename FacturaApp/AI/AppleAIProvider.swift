@@ -79,6 +79,7 @@ final class AppleAIProvider: AIProvider {
                     AppleAnularFacturaTool(modelContext: modelContext),
                     AppleImportarDatosTool(modelContext: modelContext),
                     AppleConsultarResumenTool(modelContext: modelContext),
+                    AppleRegistrarGastoTool(modelContext: modelContext),
                     AppleDeshacerTool(modelContext: modelContext)
                 ]
             ) { systemPrompt }
@@ -455,6 +456,44 @@ struct AppleDeshacerTool: Tool, @unchecked Sendable {
 
     func call(arguments: Arguments) async throws -> String {
         await MainActor.run { FacturaActions.deshacerUltimaAccion(modelContext: modelContext) }
+    }
+}
+
+// MARK: AppleRegistrarGastoTool
+
+@available(iOS 26, *)
+struct AppleRegistrarGastoTool: Tool, @unchecked Sendable {
+    let name = "registrar_gasto"
+    let description = """
+        Registra un gasto o compra del negocio. Usa esta herramienta cuando el usuario diga que ha \
+        comprado algo, ha tenido un gasto, o quiera registrar una compra. \
+        Ejemplo: "He comprado material por 50 euros" o "Gasto de gasolina 30 euros"
+        """
+
+    @Generable
+    struct Arguments {
+        @Guide(description: "Concepto del gasto")
+        var concepto: String
+        @Guide(description: "Importe en euros", .minimum(0))
+        var importe: Double
+        @Guide(description: "Categoria: material, herramientas, vehiculo, oficina, formacion, seguros, otros")
+        var categoria: String
+        @Guide(description: "Proveedor. Vacio si no se da.")
+        var proveedor: String
+    }
+
+    let modelContext: ModelContext
+
+    func call(arguments: Arguments) async throws -> String {
+        await MainActor.run { FacturaActions.registrarGasto(
+            RegistrarGastoParams(
+                concepto: arguments.concepto,
+                importe: arguments.importe,
+                categoria: arguments.categoria,
+                proveedor: arguments.proveedor
+            ),
+            modelContext: modelContext
+        ) }
     }
 }
 
