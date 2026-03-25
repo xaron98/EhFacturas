@@ -41,6 +41,7 @@ struct CommandInputBar: View {
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Ocultar teclado")
             }
 
             // Send button
@@ -54,6 +55,7 @@ struct CommandInputBar: View {
                         .font(.title2)
                         .foregroundStyle(.blue)
                 }
+                .accessibilityLabel("Enviar comando")
             }
 
             // Scanner button
@@ -69,6 +71,7 @@ struct CommandInputBar: View {
 
             // Mic button
             Button {
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                 onMicTap()
             } label: {
                 Image(systemName: estaEscuchando ? "stop.fill" : "mic.fill")

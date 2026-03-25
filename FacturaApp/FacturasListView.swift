@@ -203,6 +203,8 @@ struct FacturasListView: View {
             .clipShape(Capsule())
         }
         .buttonStyle(.plain)
+        .accessibilityLabel("\(label), \(count) facturas")
+        .accessibilityValue(seleccionado ? "seleccionado" : "")
     }
 
     private func colorEstado(_ estado: EstadoFactura?) -> Color {
@@ -219,6 +221,7 @@ struct FacturasListView: View {
 
     private func marcarComoCobrada(_ factura: Factura) {
         guard factura.estado == .emitida else { return }
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         factura.estado = .pagada
         factura.fechaModificacion = .now
         try? modelContext.save()
@@ -257,6 +260,7 @@ struct FacturasListView: View {
     }
 
     private func anularFacturaDesdeSwipe(_ factura: Factura) {
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         let desc = FetchDescriptor<Negocio>()
         guard let negocio = try? modelContext.fetch(desc).first else { return }
         let _ = VeriFactuHashService.crearRegistroAnulacion(factura: factura, negocio: negocio, modelContext: modelContext)
@@ -297,6 +301,8 @@ struct StatCard: View {
             RoundedRectangle(cornerRadius: 12)
                 .stroke(Color.primary.opacity(0.1), lineWidth: 0.5)
         )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(titulo): \(Formateadores.formatEuros(valor))")
     }
 }
 

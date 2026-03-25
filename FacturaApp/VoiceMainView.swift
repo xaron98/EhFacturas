@@ -266,6 +266,8 @@ struct VoiceMainView: View {
             ))
         }
 
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+
         procesando = true
 
         let commandID = UUID()
@@ -292,6 +294,7 @@ struct VoiceMainView: View {
                             facturaID: fID
                         ))
                     }
+                    UINotificationFeedbackGenerator().notificationOccurred(.success)
                     VozIAService.shared.hablar(resultado.mensaje)
                 } else {
                     withAnimation(.spring(response: 0.4)) {
@@ -301,6 +304,11 @@ struct VoiceMainView: View {
                             texto: resultado.mensaje,
                             accion: resultado.accionRealizada
                         ))
+                    }
+                    if resultado.accionRealizada == .error {
+                        UINotificationFeedbackGenerator().notificationOccurred(.error)
+                    } else {
+                        UINotificationFeedbackGenerator().notificationOccurred(.success)
                     }
                     VozIAService.shared.hablar(resultado.mensaje)
                 }

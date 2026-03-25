@@ -21,6 +21,7 @@ struct WelcomeView: View {
                 Image(systemName: "doc.text.fill")
                     .font(.system(size: 40))
                     .foregroundStyle(.blue.gradient)
+                    .accessibilityHidden(true)
                 Text("FacturaApp")
                     .font(.title2)
                     .fontWeight(.bold)
@@ -85,6 +86,7 @@ struct WelcomeView: View {
                             .clipShape(Capsule())
                     }
                     .buttonStyle(.plain)
+                    .accessibilityHint("Toca para enviar este comando")
                 }
             }
 

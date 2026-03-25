@@ -158,6 +158,7 @@ struct InformesView: View {
                     }
                     .frame(height: 200)
                     .chartLegend(.visible)
+                    .accessibilityLabel("Gráfico de facturación mensual")
 
                     HStack(spacing: 16) {
                         Label("Facturado", systemImage: "circle.fill")
@@ -214,6 +215,8 @@ struct InformesView: View {
                 .fontWeight(.semibold)
                 .foregroundStyle(color)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label): \(Formateadores.formatEuros(value))")
     }
 
     private func exportarCSV() {

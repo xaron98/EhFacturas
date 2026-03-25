@@ -24,6 +24,8 @@ struct ChatMessageView: View {
                     .font(.title3)
                     .foregroundStyle(.blue.opacity(0.5))
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Tu mensaje: \(msg.texto)")
             .transition(.asymmetric(insertion: .move(edge: .bottom).combined(with: .opacity), removal: .opacity))
 
         case .ia:
@@ -57,6 +59,8 @@ struct ChatMessageView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 16))
                 Spacer()
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Respuesta de la IA: \(msg.texto)")
             .transition(.asymmetric(insertion: .move(edge: .bottom).combined(with: .opacity), removal: .opacity))
 
         case .error:
@@ -72,6 +76,8 @@ struct ChatMessageView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 16))
                 Spacer()
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Error: \(msg.texto)")
             .transition(.asymmetric(insertion: .move(edge: .bottom).combined(with: .opacity), removal: .opacity))
 
         case .factura:

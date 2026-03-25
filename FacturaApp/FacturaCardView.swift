@@ -61,6 +61,9 @@ struct FacturaCardView: View {
             .shadow(color: .black.opacity(0.05), radius: 8, y: 4)
         }
         .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(factura.numeroFactura), \(factura.clienteNombre), \(Formateadores.formatEuros(factura.totalFactura))")
+        .accessibilityHint("Toca para editar la factura")
     }
 }
 
