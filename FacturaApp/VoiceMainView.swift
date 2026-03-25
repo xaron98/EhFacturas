@@ -252,7 +252,7 @@ struct VoiceMainView: View {
                         .frame(width: 6, height: 6)
                     Text("IA lista")
                         .font(.caption)
-                        .foregroundStyle(.primary.opacity(0.7))
+                        .foregroundStyle(.primary)
                 }
             } else {
                 HStack(spacing: 6) {
@@ -273,7 +273,7 @@ struct VoiceMainView: View {
             } label: {
                 Image(systemName: "tray.full")
                     .font(.title3)
-                    .foregroundStyle(.primary.opacity(0.7))
+                    .foregroundStyle(.primary)
             }
             .accessibilityLabel("Gestión manual")
         }
@@ -297,7 +297,7 @@ struct VoiceMainView: View {
                     .fontWeight(.bold)
                 Text(hayNegocio ? "Tu asistente de facturación" : "Configura tu negocio para empezar")
                     .font(.subheadline)
-                    .foregroundStyle(.primary.opacity(0.6))
+                    .foregroundStyle(.secondary)
             }
 
             // Mic button
@@ -350,7 +350,7 @@ struct VoiceMainView: View {
             VStack(spacing: 8) {
                 Text(hayNegocio ? "Prueba a decir:" : "Di algo como:")
                     .font(.caption)
-                    .foregroundStyle(.primary.opacity(0.5))
+                    .foregroundStyle(.secondary)
 
                 ForEach(ejemplos, id: \.self) { ejemplo in
                     Button {
@@ -358,7 +358,7 @@ struct VoiceMainView: View {
                     } label: {
                         Text(ejemplo)
                             .font(.caption)
-                            .foregroundStyle(.primary.opacity(0.7))
+                            .foregroundStyle(.primary)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 7)
                             .background(.regularMaterial)
@@ -507,7 +507,7 @@ struct VoiceMainView: View {
             } label: {
                 Image(systemName: "camera.viewfinder")
                     .font(.system(size: 16))
-                    .foregroundStyle(.primary.opacity(0.6))
+                    .foregroundStyle(.secondary)
                     .frame(width: 36, height: 36)
             }
             .buttonStyle(.plain)
