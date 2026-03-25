@@ -207,27 +207,12 @@ enum FacturaActions {
     // MARK: - buscarArticulo
 
     static func buscarArticulo(_ params: BuscarArticuloParams, modelContext: ModelContext) -> String {
-        let consulta = params.consulta.lowercased()
-        let palabras = consulta.split(separator: " ").map(String.init)
         let descriptor = FetchDescriptor<Articulo>(
             predicate: #Predicate<Articulo> { $0.activo == true }
         )
         let articulos = (try? modelContext.fetch(descriptor)) ?? []
 
-        var resultados: [(Articulo, Int)] = []
-        for art in articulos {
-            var score = 0
-            let n = art.nombre.lowercased()
-            for p in palabras {
-                if n.contains(p) { score += 3 }
-                if art.etiquetas.contains(where: { $0.contains(p) }) { score += 2 }
-                if art.referencia.lowercased().contains(p) { score += 2 }
-            }
-            if n.contains(consulta) { score += 5 }
-            if score > 0 { resultados.append((art, score)) }
-        }
-
-        resultados.sort { $0.1 > $1.1 }
+        let resultados = buscarArticulos(termino: params.consulta, en: articulos)
         let top = resultados.prefix(5)
 
         if top.isEmpty {
@@ -288,8 +273,19 @@ enum FacturaActions {
         for (i, parte) in partes.enumerated() {
             let (cantidad, termino) = extraerCantidadYTermino(parte)
 
-            // Buscar artículo por scoring
-            let mejor = encontrarMejorArticulo(termino: termino, en: todosArticulos)
+            // Buscar artículo por scoring fuzzy
+            let candidatos = buscarArticulos(termino: termino, en: todosArticulos)
+            let mejor = candidatos.first?.0
+
+            // Si hay múltiples candidatos con score similar, avisar
+            if candidatos.count > 1 {
+                let topScore = candidatos[0].1
+                let similares = candidatos.filter { Double($0.1) >= Double(topScore) * 0.7 }
+                if similares.count > 1 {
+                    let opciones = similares.prefix(3).map { $0.0.nombre }.joined(separator: ", ")
+                    lineasCreadas.append("ℹ️ Varios artículos similares encontrados: \(opciones). Se usó: \(similares[0].0.nombre)")
+                }
+            }
 
             if let articulo = mejor {
                 let linea = LineaFactura(
@@ -559,23 +555,77 @@ enum FacturaActions {
 
     // MARK: - Helper: encontrarMejorArticulo
 
+    /// Busca artículos por scoring fuzzy. Devuelve el mejor match o nil.
+    /// Si hay múltiples matches con score similar, devuelve el mejor.
     static func encontrarMejorArticulo(termino: String, en articulos: [Articulo]) -> Articulo? {
+        let resultados = buscarArticulos(termino: termino, en: articulos)
+        return resultados.first?.0
+    }
+
+    /// Busca artículos y devuelve todos los candidatos ordenados por score.
+    /// Usado para sugerir alternativas cuando hay ambigüedad.
+    static func buscarArticulos(termino: String, en articulos: [Articulo]) -> [(Articulo, Int)] {
         let terminoLower = termino.lowercased()
         let palabras = terminoLower.split(separator: " ").map(String.init).filter { $0.count > 1 }
+        let raices = palabras.map { normalizarPalabra($0) }
 
-        var mejor: (Articulo, Int)?
+        var resultados: [(Articulo, Int)] = []
         for art in articulos {
             var score = 0
             let n = art.nombre.lowercased()
+            let palabrasNombre = n.split(separator: " ").map(String.init)
+            let raicesNombre = palabrasNombre.map { normalizarPalabra($0) }
+
+            // Match exacto del término completo en nombre
+            if n.contains(terminoLower) { score += 10 }
+
             for p in palabras {
-                if n.contains(p) { score += 3 }
-                if art.etiquetas.contains(where: { $0.contains(p) }) { score += 2 }
+                let raiz = normalizarPalabra(p)
+
+                // Match exacto de palabra
+                if n.contains(p) { score += 4 }
+
+                // Match por raíz (bombillas → bombill, bombilla → bombill)
+                if raicesNombre.contains(where: { $0 == raiz }) { score += 3 }
+
+                // Match parcial de raíz (al menos 4 chars en común)
+                if raiz.count >= 4 {
+                    if raicesNombre.contains(where: { $0.hasPrefix(String(raiz.prefix(4))) || raiz.hasPrefix(String($0.prefix(4))) }) {
+                        score += 2
+                    }
+                }
+
+                // Match en etiquetas
+                if art.etiquetas.contains(where: { $0.contains(p) || normalizarPalabra($0) == raiz }) { score += 2 }
+
+                // Match en referencia
+                if art.referencia.lowercased().contains(p) { score += 2 }
             }
-            if n.contains(terminoLower) { score += 5 }
-            if score > (mejor?.1 ?? 0) { mejor = (art, score) }
+
+            // Match inverso: alguna palabra del nombre está en el término
+            for pn in palabrasNombre where pn.count > 2 {
+                if terminoLower.contains(pn) { score += 3 }
+            }
+
+            if score > 0 { resultados.append((art, score)) }
         }
 
-        return (mejor?.1 ?? 0) >= 2 ? mejor?.0 : nil
+        return resultados.sorted { $0.1 > $1.1 }.filter { $0.1 >= 2 }
+    }
+
+    /// Normaliza una palabra eliminando sufijos comunes del español
+    /// (plurales, diminutivos, etc.) para matching fuzzy.
+    private static func normalizarPalabra(_ palabra: String) -> String {
+        var p = palabra.lowercased()
+        // Eliminar sufijos comunes de plural/variación
+        let sufijos = ["es", "s", "illas", "illos", "ita", "ito", "itas", "itos"]
+        for sufijo in sufijos {
+            if p.count > sufijo.count + 3 && p.hasSuffix(sufijo) {
+                p = String(p.dropLast(sufijo.count))
+                break
+            }
+        }
+        return p
     }
 
     // MARK: - Helper: recalcularYGuardar
