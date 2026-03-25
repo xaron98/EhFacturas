@@ -81,13 +81,15 @@ App de facturación voice-first para autónomos y pequeñas empresas en España.
 - Beneficio neto real
 - Exportar a CSV
 
-### VeriFactu (RD 1007/2023)
+### Cumplimiento legal — VeriFactu y futuros sistemas
 - Hash chain SHA-256 inmutable
 - XML conforme XSD AEAT V1.0
 - Cliente SOAP con certificado digital X.509
 - Firma XMLDSig (C14N + RSA-SHA256)
 - Cola offline (4 días máximo)
 - Registro de fabricante
+
+> **Nota:** La arquitectura de EhFacturas! está diseñada para ser compatible y adaptable a cualquier sistema de facturación electrónica que entre en vigor en España, ya sea VeriFactu (RD 1007/2023) o cualquier normativa que lo sustituya. La base técnica (cadena de hashes, registros inmutables, firma digital, comunicación con la AEAT) se adaptará al nuevo marco legal cuando se publiquen las especificaciones definitivas.
 
 ### Multi-proveedor IA
 - Apple Intelligence (on-device, gratis, iOS 26+)
