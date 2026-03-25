@@ -55,9 +55,9 @@ struct VoiceMainView: View {
 
     var body: some View {
         ZStack {
-            // Dynamic gradient background
+            // Dynamic gradient background (subtle, doesn't wash out text)
             LinearGradient(
-                colors: [Color.blue.opacity(0.15), Color.purple.opacity(0.12)],
+                colors: [Color.blue.opacity(0.08), Color.purple.opacity(0.06)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -143,7 +143,9 @@ struct VoiceMainView: View {
                 entradaView
             }
         }
-        .onAppear {
+        .task {
+            // Esperar un momento para que CloudKit sincronice datos
+            try? await Task.sleep(for: .milliseconds(500))
             // Si no hay negocio, iniciar onboarding conversacional
             if !hayNegocio && mensajes.isEmpty {
                 mensajes.append(MensajeChat(
@@ -250,7 +252,7 @@ struct VoiceMainView: View {
                         .frame(width: 6, height: 6)
                     Text("IA lista")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.primary.opacity(0.7))
                 }
             } else {
                 HStack(spacing: 6) {
@@ -271,7 +273,7 @@ struct VoiceMainView: View {
             } label: {
                 Image(systemName: "tray.full")
                     .font(.title3)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.primary.opacity(0.7))
             }
             .accessibilityLabel("Gestión manual")
         }
@@ -295,7 +297,7 @@ struct VoiceMainView: View {
                     .fontWeight(.bold)
                 Text(hayNegocio ? "Tu asistente de facturación" : "Configura tu negocio para empezar")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.primary.opacity(0.6))
             }
 
             // Mic button
@@ -348,7 +350,7 @@ struct VoiceMainView: View {
             VStack(spacing: 8) {
                 Text(hayNegocio ? "Prueba a decir:" : "Di algo como:")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.primary.opacity(0.5))
 
                 ForEach(ejemplos, id: \.self) { ejemplo in
                     Button {
@@ -356,7 +358,7 @@ struct VoiceMainView: View {
                     } label: {
                         Text(ejemplo)
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.primary.opacity(0.7))
                             .padding(.horizontal, 14)
                             .padding(.vertical, 7)
                             .background(.regularMaterial)
@@ -505,7 +507,7 @@ struct VoiceMainView: View {
             } label: {
                 Image(systemName: "camera.viewfinder")
                     .font(.system(size: 16))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.primary.opacity(0.6))
                     .frame(width: 36, height: 36)
             }
             .buttonStyle(.plain)
@@ -528,7 +530,7 @@ struct VoiceMainView: View {
                         .frame(width: 44, height: 44)
                     Circle()
                         .stroke(lineWidth: speech.estaEscuchando ? 2 : 1)
-                        .foregroundStyle(speech.estaEscuchando ? .red : .secondary)
+                        .foregroundStyle(speech.estaEscuchando ? .red : .primary.opacity(0.5))
                         .frame(width: 44, height: 44)
 
                     // Anillo de audio
@@ -543,7 +545,7 @@ struct VoiceMainView: View {
 
                     Image(systemName: speech.estaEscuchando ? "stop.fill" : "mic")
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundStyle(speech.estaEscuchando ? .red : .secondary)
+                        .foregroundStyle(speech.estaEscuchando ? .red : .primary.opacity(0.5))
                 }
             }
             .buttonStyle(.plain)
