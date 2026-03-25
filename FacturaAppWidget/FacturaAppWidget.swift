@@ -53,7 +53,7 @@ struct FacturaWidgetSmallView: View {
             HStack {
                 Image(systemName: "doc.text.fill")
                     .foregroundStyle(.blue)
-                Text("FacturaApp")
+                Text("EhFacturas!")
                     .font(.caption2)
                     .fontWeight(.bold)
             }
@@ -101,7 +101,7 @@ struct FacturaWidgetMediumView: View {
                 HStack {
                     Image(systemName: "doc.text.fill")
                         .foregroundStyle(.blue)
-                    Text("FacturaApp")
+                    Text("EhFacturas!")
                         .font(.caption)
                         .fontWeight(.bold)
                 }
@@ -159,7 +159,7 @@ struct FacturaAppWidget: Widget {
                     .background()
             }
         }
-        .configurationDisplayName("Facturación")
+        .configurationDisplayName("EhFacturas!")
         .description("Resumen de facturas pendientes y cobradas.")
         .supportedFamilies([.systemSmall, .systemMedium])
     }

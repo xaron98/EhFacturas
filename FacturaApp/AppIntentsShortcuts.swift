@@ -15,7 +15,7 @@ struct CrearFacturaIntent: AppIntent {
     var articulosTexto: String
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        .result(dialog: "Abriendo FacturaApp para crear la factura...")
+        .result(dialog: "Abriendo EhFacturas! para crear la factura...")
     }
 }
 
@@ -25,7 +25,7 @@ struct ConsultarResumenIntent: AppIntent {
     static let openAppWhenRun = true
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        .result(dialog: "Abriendo FacturaApp...")
+        .result(dialog: "Abriendo EhFacturas!...")
     }
 }
 

@@ -246,7 +246,7 @@ enum VeriFactuXMLGenerator {
         xml += "          <sf:SistemaInformatico>\n"
         xml += "            <sf:NombreRazon>\(escaparXML(negocio.nombre))</sf:NombreRazon>\n"
         xml += "            <sf:NIF>\(escaparXML(negocio.nif))</sf:NIF>\n"
-        xml += "            <sf:NombreSistemaInformatico>FacturaApp</sf:NombreSistemaInformatico>\n"
+        xml += "            <sf:NombreSistemaInformatico>EhFacturas</sf:NombreSistemaInformatico>\n"
         xml += "            <sf:IdSistemaInformatico>01</sf:IdSistemaInformatico>\n"
         xml += "            <sf:Version>1.0</sf:Version>\n"
         xml += "            <sf:NumeroInstalacion>01</sf:NumeroInstalacion>\n"

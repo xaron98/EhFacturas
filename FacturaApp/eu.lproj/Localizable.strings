@@ -1,4 +1,4 @@
-"app_name" = "FacturaApp";
+"app_name" = "EhFacturas!";
 "ai_ready" = "AA prest";
 "write_command" = "Idatzi komando bat...";
 "try_saying" = "Saiatu esaten:";
@@ -28,3 +28,4 @@
 "thinking" = "Pentsatzen...";
 "no_clients" = "Bezerorik ez";
 "no_invoices" = "Fakturarik ez";
+"whats_new" = "Berrikuntzak";

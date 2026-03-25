@@ -1,4 +1,4 @@
-# FacturaApp — Guía para Claude
+# EhFacturas! — Guía para Claude
 
 ## RESTRICCIONES
 - **NO hacer `git push`** hasta que el usuario lo diga explícitamente.

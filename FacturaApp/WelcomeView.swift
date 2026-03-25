@@ -22,7 +22,7 @@ struct WelcomeView: View {
                     .font(.system(size: 40))
                     .foregroundStyle(.blue.gradient)
                     .accessibilityHidden(true)
-                Text("FacturaApp")
+                Text("EhFacturas!")
                     .font(.title2)
                     .fontWeight(.bold)
                 Text(hayNegocio ? "Tu asistente de facturación" : "Configura tu negocio para empezar")

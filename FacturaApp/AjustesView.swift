@@ -27,6 +27,7 @@ struct AjustesView: View {
     @State private var mostrarSuscripcion = false
     @State private var mostrarShareBackup = false
     @State private var backupData: Data?
+    @State private var mostrarWhatsNew = false
 
     var body: some View {
         if let negocio = negocios.first {
@@ -351,7 +352,7 @@ struct AjustesView: View {
                     Divider()
 
                     Group {
-                        infoRow("Software", "FacturaApp")
+                        infoRow("Software", "EhFacturas!")
                         infoRow("Versión", "1.0")
                         infoRow("ID Sistema", "01")
                         infoRow("Desarrollador", "FacturaApp Dev")
@@ -378,6 +379,19 @@ struct AjustesView: View {
                 Text("Copia de seguridad")
             } footer: {
                 Text("Exporta clientes, artículos y gastos como archivo JSON.")
+            }
+
+            // Acerca de
+            Section {
+                Button {
+                    mostrarWhatsNew = true
+                } label: {
+                    Label("Novedades de esta versión", systemImage: "sparkles")
+                }
+            } header: {
+                Text("Acerca de")
+            } footer: {
+                Text("EhFacturas! v\(WhatsNewView.currentVersion)")
             }
         }
         .fileImporter(
@@ -457,6 +471,9 @@ struct AjustesView: View {
             if let data = backupData {
                 ShareSheet(items: [data])
             }
+        }
+        .sheet(isPresented: $mostrarWhatsNew) {
+            WhatsNewView()
         }
     }
 
@@ -786,7 +803,7 @@ struct SubscriptionView: View {
                     .font(.system(size: 60))
                     .foregroundStyle(.blue.gradient)
 
-                Text("FacturaApp Pro")
+                Text("EhFacturas! Pro")
                     .font(.title2)
                     .fontWeight(.bold)
 

@@ -1,5 +1,5 @@
 // Spanish (default - already in code)
-"app_name" = "FacturaApp";
+"app_name" = "EhFacturas!";
 "ai_ready" = "IA lista";
 "write_command" = "Escribe un comando...";
 "try_saying" = "Prueba a decir:";
@@ -44,3 +44,4 @@
 "no_articles" = "Sin artículos";
 "no_invoices" = "Sin facturas";
 "no_expenses" = "Sin gastos";
+"whats_new" = "Novedades";

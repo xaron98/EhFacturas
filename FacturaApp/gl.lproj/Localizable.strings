@@ -1,4 +1,4 @@
-"app_name" = "FacturaApp";
+"app_name" = "EhFacturas!";
 "ai_ready" = "IA lista";
 "write_command" = "Escribe un comando...";
 "try_saying" = "Proba a dicir:";
@@ -28,3 +28,4 @@
 "thinking" = "Pensando...";
 "no_clients" = "Sen clientes";
 "no_invoices" = "Sen facturas";
+"whats_new" = "Novidades";

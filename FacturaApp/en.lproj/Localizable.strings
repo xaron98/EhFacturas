@@ -1,4 +1,4 @@
-"app_name" = "FacturaApp";
+"app_name" = "EhFacturas!";
 "ai_ready" = "AI ready";
 "write_command" = "Type a command...";
 "try_saying" = "Try saying:";
@@ -43,3 +43,4 @@
 "no_articles" = "No products";
 "no_invoices" = "No invoices";
 "no_expenses" = "No expenses";
+"whats_new" = "What's New";

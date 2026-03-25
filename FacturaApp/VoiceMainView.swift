@@ -49,6 +49,7 @@ struct VoiceMainView: View {
     @State private var currentCommandID = UUID()
     @State private var mostrarScanner = false
     @State private var animateGradient = false
+    @State private var mostrarWhatsNew = false
     @FocusState private var textoFocused: Bool
 
     private var hayNegocio: Bool { !negocios.isEmpty }
@@ -186,6 +187,9 @@ struct VoiceMainView: View {
         .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         .task {
             animateGradient = true
+            if WhatsNewView.shouldShowWhatsNew {
+                mostrarWhatsNew = true
+            }
             // Esperar un momento para que CloudKit sincronice datos
             try? await Task.sleep(for: .milliseconds(500))
             // Si no hay negocio, iniciar onboarding conversacional
@@ -229,6 +233,9 @@ struct VoiceMainView: View {
             ScannerView { texto in
                 enviarComando(texto)
             }
+        }
+        .sheet(isPresented: $mostrarWhatsNew) {
+            WhatsNewView()
         }
         .onChange(of: aiService.solicitarImportacion) { _, tipo in
             if let tipo {
@@ -427,7 +434,7 @@ struct BandejaManualView: View {
                         // Sidebar
                         VStack(spacing: 0) {
                             HStack {
-                                Text("FacturaApp")
+                                Text("EhFacturas!")
                                     .font(.headline)
                                 Spacer()
                                 Button {
