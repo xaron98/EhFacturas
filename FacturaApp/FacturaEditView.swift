@@ -25,6 +25,8 @@ struct FacturaEditView: View {
     @State private var generandoPDF = false
     @State private var mostrarEnviarPDF = false
     @State private var pdfParaEnviar: Data?
+    @State private var mostrarFotos = false
+    @State private var mostrarFirma = false
 
     private var esEditable: Bool {
         factura.estado == .borrador
@@ -158,6 +160,12 @@ struct FacturaEditView: View {
                     ShareSheet(items: [data])
                 }
             }
+            .sheet(isPresented: $mostrarFotos) {
+                FotosFacturaView(factura: factura)
+            }
+            .sheet(isPresented: $mostrarFirma) {
+                FirmaView(factura: factura)
+            }
         }
     }
 
@@ -227,6 +235,14 @@ struct FacturaEditView: View {
                             try? modelContext.save()
                             refreshTrigger += 1
                         }
+                    }
+
+                    miniBoton(titulo: "Fotos", icono: "camera.fill", color: .indigo) {
+                        mostrarFotos = true
+                    }
+
+                    miniBoton(titulo: "Firma", icono: "pencil.tip", color: .brown) {
+                        mostrarFirma = true
                     }
                 }
                 .padding(.vertical, 4)

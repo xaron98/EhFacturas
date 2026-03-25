@@ -392,6 +392,8 @@ struct FacturaDetalleView: View {
     @State private var mostrarPlantillaGuardada = false
     @State private var mostrarCrearRecurrente = false
     @State private var frecuenciaRecurrente = "mensual"
+    @State private var mostrarFotos = false
+    @State private var mostrarFirma = false
 
     var body: some View {
         List {
@@ -465,6 +467,12 @@ struct FacturaDetalleView: View {
                         }
                         accionBoton("Recurrente", icono: "arrow.clockwise", color: .teal) {
                             mostrarCrearRecurrente = true
+                        }
+                        accionBoton("Fotos", icono: "camera.fill", color: .indigo) {
+                            mostrarFotos = true
+                        }
+                        accionBoton("Firma", icono: "pencil.tip", color: .brown) {
+                            mostrarFirma = true
                         }
                     }
                 }
@@ -641,6 +649,12 @@ struct FacturaDetalleView: View {
             if let data = pdfParaEnviar {
                 ShareSheet(items: [data])
             }
+        }
+        .sheet(isPresented: $mostrarFotos) {
+            FotosFacturaView(factura: factura)
+        }
+        .sheet(isPresented: $mostrarFirma) {
+            FirmaView(factura: factura)
         }
         .alert("Plantilla guardada", isPresented: $mostrarPlantillaGuardada) {
             Button("OK") { }

@@ -25,6 +25,8 @@ struct AjustesView: View {
     @State private var mostrarAPIKeyInput = false
     @State private var apiKeyTexto = ""
     @State private var mostrarSuscripcion = false
+    @State private var mostrarShareBackup = false
+    @State private var backupData: Data?
 
     var body: some View {
         if let negocio = negocios.first {
@@ -364,6 +366,19 @@ struct AjustesView: View {
             } footer: {
                 Text("Información del sistema informático de facturación conforme al RD 1007/2023.")
             }
+
+            // Copia de seguridad
+            Section {
+                Button {
+                    exportarBackup()
+                } label: {
+                    Label("Exportar datos (JSON)", systemImage: "square.and.arrow.up")
+                }
+            } header: {
+                Text("Copia de seguridad")
+            } footer: {
+                Text("Exporta clientes, artículos y gastos como archivo JSON.")
+            }
         }
         .fileImporter(
             isPresented: $mostrarImportarCertificado,
@@ -437,6 +452,18 @@ struct AjustesView: View {
         }
         .sheet(isPresented: $mostrarSuscripcion) {
             SubscriptionView()
+        }
+        .sheet(isPresented: $mostrarShareBackup) {
+            if let data = backupData {
+                ShareSheet(items: [data])
+            }
+        }
+    }
+
+    private func exportarBackup() {
+        if let data = BackupService.exportar(modelContext: modelContext) {
+            backupData = data
+            mostrarShareBackup = true
         }
     }
 

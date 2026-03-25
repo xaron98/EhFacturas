@@ -333,6 +333,8 @@ final class Factura {
     var notasInternas: String = ""
     var promptOriginal: String?
     @Attribute(.externalStorage) var pdfData: Data?
+    @Attribute(.externalStorage) var fotosData: [Data]?
+    @Attribute(.externalStorage) var firmaClienteData: Data?
     var fechaCreacion: Date = Date.now
     var fechaModificacion: Date = Date.now
     var tipoFactura: TipoFacturaVF = TipoFacturaVF.completa
