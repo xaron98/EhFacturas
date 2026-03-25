@@ -195,6 +195,33 @@ struct AjustesView: View {
                 Text("Apariencia")
             }
 
+            // Voz de la IA
+            Section {
+                Toggle("Voz activada", isOn: Binding(
+                    get: { VozIAService.shared.vozActiva },
+                    set: { VozIAService.shared.vozActiva = $0 }
+                ))
+
+                if VozIAService.shared.vozActiva {
+                    Picker("Tipo de voz", selection: Binding(
+                        get: { VozIAService.shared.vozSeleccionada },
+                        set: { VozIAService.shared.vozSeleccionada = $0 }
+                    )) {
+                        ForEach(VozIAService.TipoVoz.allCases, id: \.self) { tipo in
+                            Text(tipo.rawValue).tag(tipo)
+                        }
+                    }
+
+                    Button("Probar voz") {
+                        VozIAService.shared.hablar("Hola, soy tu asistente de facturación. ¿En qué puedo ayudarte?")
+                    }
+                }
+            } header: {
+                Text("Voz de la IA")
+            } footer: {
+                Text("La IA leerá las respuestas en voz alta cuando esté activada.")
+            }
+
             // Inteligencia Artificial
             Section {
                 // Active provider indicator

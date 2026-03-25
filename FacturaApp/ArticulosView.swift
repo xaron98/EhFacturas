@@ -113,21 +113,6 @@ struct ArticulosListView: View {
                 .searchable(text: $textoBusqueda, prompt: "Buscar artículo...")
             }
         }
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button {
-                    mostrarFormulario = true
-                } label: {
-                    Image(systemName: "plus")
-                        .font(.footnote)
-                        .fontWeight(.bold)
-                        .foregroundStyle(.white)
-                        .frame(width: 28, height: 28)
-                        .background(.blue)
-                        .clipShape(Circle())
-                }
-            }
-        }
         .sheet(isPresented: $mostrarFormulario) {
             NavigationStack {
                 ArticuloFormularioView(articulo: nil)

@@ -40,6 +40,7 @@ final class CommandAIService: ObservableObject {
     @Published var ultimaRespuesta: ComandoResultado?
     @Published var historial: [EntradaHistorial] = []
     @Published var solicitarImportacion: TipoImportacion?
+    @Published var estadoDetallado: String = "Pensando..."
 
     enum Estado: Equatable {
         case listo
@@ -81,7 +82,8 @@ final class CommandAIService: ObservableObject {
         let textoLimpio = texto.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !textoLimpio.isEmpty else { return }
 
-        estado = .procesando("Pensando...")
+        estadoDetallado = detectarEstadoDetallado(textoLimpio)
+        estado = .procesando(estadoDetallado)
 
         do {
             // Build prompt with recent session context
@@ -203,6 +205,24 @@ final class CommandAIService: ObservableObject {
         - Si el usuario pide varias cosas en un solo mensaje ("crea un cliente y hazle una factura"), ejecuta cada acción en orden usando las herramientas correspondientes.
         - Después de ejecutar, confirma en UNA frase corta. No preguntes si quiere algo más.
         """
+    }
+
+    // MARK: - Estado detallado
+
+    private func detectarEstadoDetallado(_ comando: String) -> String {
+        let c = comando.lowercased()
+        if c.contains("factura") || c.contains("presupuesto") { return "Generando factura..." }
+        if c.contains("cliente") && (c.contains("añade") || c.contains("crea") || c.contains("nuevo")) { return "Creando cliente..." }
+        if c.contains("artículo") || c.contains("articulo") || c.contains("producto") || c.contains("añade") { return "Añadiendo al catálogo..." }
+        if c.contains("busca") || c.contains("encuentra") || c.contains("cuánto") || c.contains("cuanto") { return "Buscando..." }
+        if c.contains("cobrada") || c.contains("pagada") { return "Actualizando estado..." }
+        if c.contains("resumen") || c.contains("pendiente") || c.contains("informe") { return "Consultando datos..." }
+        if c.contains("anula") || c.contains("borra") || c.contains("elimina") { return "Procesando anulación..." }
+        if c.contains("gasto") || c.contains("comprado") { return "Registrando gasto..." }
+        if c.contains("importa") || c.contains("carga") { return "Preparando importación..." }
+        if c.contains("deshaz") || c.contains("deshacer") { return "Deshaciendo..." }
+        if c.contains("configur") || c.contains("llamo") || c.contains("nif") { return "Configurando negocio..." }
+        return "Pensando..."
     }
 
     // MARK: - Determinar acción

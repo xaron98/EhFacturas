@@ -77,21 +77,6 @@ struct ClientesListView: View {
                 .searchable(text: $textoBusqueda, prompt: "Buscar cliente...")
             }
         }
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button {
-                    mostrarFormulario = true
-                } label: {
-                    Image(systemName: "plus")
-                        .font(.footnote)
-                        .fontWeight(.bold)
-                        .foregroundStyle(.white)
-                        .frame(width: 28, height: 28)
-                        .background(.blue)
-                        .clipShape(Circle())
-                }
-            }
-        }
         .sheet(item: $clienteSeleccionado) { cliente in
             NavigationStack {
                 ClienteDetalleView(cliente: cliente)

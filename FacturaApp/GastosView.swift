@@ -70,21 +70,6 @@ struct GastosView: View {
                 }
             }
         }
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button {
-                    mostrarFormulario = true
-                } label: {
-                    Image(systemName: "plus")
-                        .font(.footnote)
-                        .fontWeight(.bold)
-                        .foregroundStyle(.white)
-                        .frame(width: 28, height: 28)
-                        .background(.blue)
-                        .clipShape(Circle())
-                }
-            }
-        }
         .sheet(isPresented: $mostrarFormulario) {
             GastoFormularioView()
         }

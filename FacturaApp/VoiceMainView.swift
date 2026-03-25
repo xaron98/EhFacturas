@@ -46,6 +46,7 @@ struct VoiceMainView: View {
     @State private var mostrarImportador = false
     @State private var currentTask: Task<Void, Never>?
     @State private var mostrarScanner = false
+    @State private var animateGradient = false
 
     private var hayNegocio: Bool { !negocios.isEmpty }
 
@@ -55,9 +56,33 @@ struct VoiceMainView: View {
 
     var body: some View {
         ZStack {
-            // Background: system default + subtle tint in light mode only
+            // Animated gradient background
             Color(.systemBackground)
                 .ignoresSafeArea()
+                .overlay {
+                    // Animated gradient orbs
+                    ZStack {
+                        Circle()
+                            .fill(Color.blue.opacity(0.15))
+                            .frame(width: 300, height: 300)
+                            .blur(radius: 80)
+                            .offset(x: animateGradient ? 50 : -50, y: animateGradient ? -80 : 80)
+
+                        Circle()
+                            .fill(Color.purple.opacity(0.12))
+                            .frame(width: 250, height: 250)
+                            .blur(radius: 70)
+                            .offset(x: animateGradient ? -60 : 60, y: animateGradient ? 60 : -60)
+
+                        Circle()
+                            .fill(Color.cyan.opacity(0.08))
+                            .frame(width: 200, height: 200)
+                            .blur(radius: 60)
+                            .offset(x: animateGradient ? 30 : -30, y: animateGradient ? 100 : -20)
+                    }
+                    .ignoresSafeArea()
+                    .animation(.easeInOut(duration: 8).repeatForever(autoreverses: true), value: animateGradient)
+                }
 
             VStack(spacing: 0) {
                 // Toolbar superior
@@ -83,11 +108,12 @@ struct VoiceMainView: View {
                                 HStack(spacing: 8) {
                                     ProgressView()
                                         .scaleEffect(0.8)
-                                    Text("Pensando...")
+                                    Text(aiService.estadoDetallado)
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
                                 }
                                 .padding(.vertical, 8)
+                                .transition(.scale.combined(with: .opacity))
                                 .id("procesando")
                             }
 
@@ -133,13 +159,12 @@ struct VoiceMainView: View {
                     }
                 }
 
-                Divider()
-
                 // Zona de entrada (abajo fija)
                 entradaView
             }
         }
         .task {
+            animateGradient = true
             // Esperar un momento para que CloudKit sincronice datos
             try? await Task.sleep(for: .milliseconds(500))
             // Si no hay negocio, iniciar onboarding conversacional
@@ -200,11 +225,13 @@ struct VoiceMainView: View {
         guard !textoLimpio.isEmpty else { return }
 
         // Añadir mensaje del usuario
-        mensajes.append(MensajeChat(
-            timestamp: .now,
-            tipo: .usuario,
-            texto: textoLimpio
-        ))
+        withAnimation(.spring(response: 0.4)) {
+            mensajes.append(MensajeChat(
+                timestamp: .now,
+                tipo: .usuario,
+                texto: textoLimpio
+            ))
+        }
 
         procesando = true
 
@@ -217,20 +244,26 @@ struct VoiceMainView: View {
             // Añadir respuesta de la IA
             if let resultado = aiService.ultimaRespuesta {
                 if let fID = resultado.facturaID {
-                    mensajes.append(MensajeChat(
-                        timestamp: .now,
-                        tipo: .factura,
-                        texto: resultado.mensaje,
-                        accion: resultado.accionRealizada,
-                        facturaID: fID
-                    ))
+                    withAnimation(.spring(response: 0.4)) {
+                        mensajes.append(MensajeChat(
+                            timestamp: .now,
+                            tipo: .factura,
+                            texto: resultado.mensaje,
+                            accion: resultado.accionRealizada,
+                            facturaID: fID
+                        ))
+                    }
+                    VozIAService.shared.hablar(resultado.mensaje)
                 } else {
-                    mensajes.append(MensajeChat(
-                        timestamp: .now,
-                        tipo: resultado.accionRealizada == .error ? .error : .ia,
-                        texto: resultado.mensaje,
-                        accion: resultado.accionRealizada
-                    ))
+                    withAnimation(.spring(response: 0.4)) {
+                        mensajes.append(MensajeChat(
+                            timestamp: .now,
+                            tipo: resultado.accionRealizada == .error ? .error : .ia,
+                            texto: resultado.mensaje,
+                            accion: resultado.accionRealizada
+                        ))
+                    }
+                    VozIAService.shared.hablar(resultado.mensaje)
                 }
             }
         }
@@ -400,6 +433,7 @@ struct VoiceMainView: View {
                     .font(.title3)
                     .foregroundStyle(.blue.opacity(0.5))
             }
+            .transition(.asymmetric(insertion: .move(edge: .bottom).combined(with: .opacity), removal: .opacity))
 
         case .ia:
             HStack(alignment: .top, spacing: 10) {
@@ -432,6 +466,7 @@ struct VoiceMainView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 16))
                 Spacer()
             }
+            .transition(.asymmetric(insertion: .move(edge: .bottom).combined(with: .opacity), removal: .opacity))
 
         case .error:
             HStack(alignment: .top, spacing: 10) {
@@ -446,6 +481,7 @@ struct VoiceMainView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 16))
                 Spacer()
             }
+            .transition(.asymmetric(insertion: .move(edge: .bottom).combined(with: .opacity), removal: .opacity))
 
         case .factura:
             if let fID = msg.facturaID {
@@ -459,21 +495,20 @@ struct VoiceMainView: View {
                 .font(.caption)
                 .foregroundStyle(.tertiary)
                 .frame(maxWidth: .infinity)
+                .transition(.asymmetric(insertion: .move(edge: .bottom).combined(with: .opacity), removal: .opacity))
         }
     }
 
     // MARK: - Zona de entrada (abajo)
 
     private var entradaView: some View {
-        HStack(spacing: 12) {
-            // Campo de texto
+        HStack(spacing: 10) {
+            // Text field
             TextField("Escribe un comando...", text: $textoManual)
                 .font(.subheadline)
                 .textFieldStyle(.plain)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(Color(.secondarySystemBackground))
-                .clipShape(Capsule())
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
                 .onSubmit {
                     if !textoManual.trimmingCharacters(in: .whitespaces).isEmpty {
                         let cmd = textoManual
@@ -482,7 +517,7 @@ struct VoiceMainView: View {
                     }
                 }
 
-            // Botón enviar texto (si hay texto)
+            // Send button
             if !textoManual.trimmingCharacters(in: .whitespaces).isEmpty {
                 Button {
                     let cmd = textoManual
@@ -495,61 +530,50 @@ struct VoiceMainView: View {
                 }
             }
 
-            // Botón escáner
+            // Scanner button
             Button {
                 mostrarScanner = true
             } label: {
                 Image(systemName: "camera.viewfinder")
                     .font(.system(size: 16))
                     .foregroundStyle(.secondary)
-                    .frame(width: 36, height: 36)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Escanear documento")
 
-            // Botón micrófono
+            // Mic button
             Button {
                 if speech.estaEscuchando {
                     speech.detenerEscucha()
                 } else if speech.permisoConecido {
                     speech.iniciarEscucha()
                 } else {
-                    // Primera vez: pide permisos y luego inicia
                     speech.solicitarPermisosYEscuchar()
                 }
             } label: {
-                ZStack {
-                    Circle()
-                        .fill(speech.estaEscuchando ? .red.opacity(0.15) : .clear)
-                        .frame(width: 44, height: 44)
-                    Circle()
-                        .stroke(lineWidth: speech.estaEscuchando ? 2 : 1)
-                        .foregroundStyle(speech.estaEscuchando ? .red : .primary.opacity(0.5))
-                        .frame(width: 44, height: 44)
-
-                    // Anillo de audio
-                    if speech.estaEscuchando {
-                        Circle()
-                            .stroke(lineWidth: 1)
-                            .foregroundStyle(.red.opacity(0.4))
-                            .scaleEffect(1.0 + CGFloat(speech.nivelAudio) * 0.3)
-                            .animation(.easeOut(duration: 0.1), value: speech.nivelAudio)
-                            .frame(width: 44, height: 44)
-                    }
-
-                    Image(systemName: speech.estaEscuchando ? "stop.fill" : "mic")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundStyle(speech.estaEscuchando ? .red : .primary.opacity(0.5))
-                }
+                Image(systemName: speech.estaEscuchando ? "stop.fill" : "mic.fill")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(speech.estaEscuchando ? .red : .blue)
+                    .frame(width: 36, height: 36)
+                    .background(speech.estaEscuchando ? Color.red.opacity(0.15) : Color.blue.opacity(0.1))
+                    .clipShape(Circle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel(speech.estaEscuchando ? "Detener grabación" : "Activar micrófono")
             .accessibilityHint("Pulsa para hablar un comando")
             .disabled(procesando)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-        .background(Color(.secondarySystemBackground))
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 24))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24)
+                .stroke(Color.primary.opacity(0.08), lineWidth: 0.5)
+        )
+        .shadow(color: .black.opacity(0.08), radius: 12, y: 4)
+        .padding(.horizontal, 12)
+        .padding(.bottom, 8)
     }
 
     // MARK: - Helpers de estilo
@@ -607,6 +631,7 @@ struct BandejaManualView: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var seccionSeleccionada: SeccionBandeja = .facturas
+    @State private var mostrarFormularioNuevo = false
 
     enum SeccionBandeja: String, CaseIterable {
         case facturas = "Facturas"
@@ -620,6 +645,43 @@ struct BandejaManualView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
+                // Custom toolbar — Liquid Glass style
+                HStack {
+                    Text("Gestión manual")
+                        .font(.headline)
+
+                    Spacer()
+
+                    if seccionSeleccionada == .clientes || seccionSeleccionada == .articulos || seccionSeleccionada == .gastos {
+                        Button {
+                            mostrarFormularioNuevo = true
+                        } label: {
+                            Image(systemName: "plus")
+                                .font(.callout)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.primary)
+                                .frame(width: 34, height: 34)
+                                .background(Color(.systemGray5))
+                                .clipShape(Circle())
+                        }
+                    }
+
+                    Button {
+                        dismiss()
+                    } label: {
+                        Text("Cerrar")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.primary)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(Color(.systemGray5))
+                            .clipShape(Capsule())
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+
                 Picker("Sección", selection: $seccionSeleccionada) {
                     ForEach(SeccionBandeja.allCases, id: \.self) { sec in
                         Text(sec.rawValue).tag(sec)
@@ -646,11 +708,19 @@ struct BandejaManualView: View {
                     }
                 }
             }
-            .navigationTitle("Gestión manual")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Cerrar") { dismiss() }
+            .navigationBarHidden(true)
+            .sheet(isPresented: $mostrarFormularioNuevo) {
+                NavigationStack {
+                    switch seccionSeleccionada {
+                    case .clientes:
+                        ClienteFormularioView(cliente: nil)
+                    case .articulos:
+                        ArticuloFormularioView(articulo: nil)
+                    case .gastos:
+                        GastoFormularioView()
+                    default:
+                        EmptyView()
+                    }
                 }
             }
         }
