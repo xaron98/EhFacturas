@@ -1,0 +1,66 @@
+{
+  "identifier" : "es.facturaapp.storekit",
+  "type" : "com.apple.storekit.testing",
+  "version" : 3,
+  "subscriptionGroups" : [
+    {
+      "id" : "21000001",
+      "localizations" : [
+        {
+          "description" : "Accede a IA por voz con Claude o OpenAI en todos los dispositivos.",
+          "displayName" : "FacturaApp Pro",
+          "locale" : "es_ES"
+        }
+      ],
+      "name" : "Pro",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "4.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "22000001",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "IA por voz ilimitada con Claude o OpenAI.",
+              "displayName" : "Pro Mensual",
+              "locale" : "es_ES"
+            }
+          ],
+          "name" : "Pro Mensual",
+          "productID" : "es.facturaapp.pro.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Pro Mensual",
+          "subscriptionGroupID" : "21000001",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : []
+        },
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "39.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "22000002",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "IA por voz ilimitada. Ahorra 2 meses respecto al plan mensual.",
+              "displayName" : "Pro Anual",
+              "locale" : "es_ES"
+            }
+          ],
+          "name" : "Pro Anual",
+          "productID" : "es.facturaapp.pro.yearly",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Pro Anual",
+          "subscriptionGroupID" : "21000001",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : []
+        }
+      ]
+    }
+  ]
+}

@@ -545,18 +545,20 @@ final class EventoSIF {
 // MARK: - DataConfig (ModelContainer)
 
 enum DataConfig {
+    static let schema = Schema([
+        Negocio.self,
+        Cliente.self,
+        Categoria.self,
+        Articulo.self,
+        Factura.self,
+        LineaFactura.self,
+        RegistroFacturacion.self,
+        EventoSIF.self,
+        PerfilImportacion.self
+    ])
+
     static let container: ModelContainer = {
-        let schema = Schema([
-            Negocio.self,
-            Cliente.self,
-            Categoria.self,
-            Articulo.self,
-            Factura.self,
-            LineaFactura.self,
-            RegistroFacturacion.self,
-            EventoSIF.self,
-            PerfilImportacion.self
-        ])
+        // Primero intentar local (rápido) con CloudKit
         let config = ModelConfiguration(
             "FacturaApp",
             isStoredInMemoryOnly: false,
@@ -565,14 +567,13 @@ enum DataConfig {
         do {
             return try ModelContainer(for: schema, configurations: config)
         } catch {
-            // Fallback: intentar sin CloudKit
-            print("ERROR ModelContainer con CloudKit: \(error.localizedDescription). Intentando sin CloudKit...")
-            let fallbackConfig = ModelConfiguration("FacturaApp", isStoredInMemoryOnly: false)
+            print("INFO: CloudKit config failed, trying local: \(error.localizedDescription)")
+            // Fallback sin CloudKit
+            let localConfig = ModelConfiguration("FacturaApp", isStoredInMemoryOnly: false)
             do {
-                return try ModelContainer(for: schema, configurations: fallbackConfig)
+                return try ModelContainer(for: schema, configurations: localConfig)
             } catch {
-                // Último recurso: en memoria
-                print("ERROR ModelContainer local: \(error.localizedDescription). Usando almacenamiento en memoria.")
+                print("ERROR: Local config failed, using memory: \(error.localizedDescription)")
                 let memoryConfig = ModelConfiguration(isStoredInMemoryOnly: true)
                 return try! ModelContainer(for: schema, configurations: memoryConfig)
             }
