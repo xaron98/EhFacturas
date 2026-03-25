@@ -649,13 +649,13 @@ extension CloudToolSchemas {
         modelContext: ModelContext,
         factura: Factura? = nil,
         onUpdate: (@Sendable () -> Void)? = nil
-    ) -> String {
+    ) async -> String {
         switch name {
 
-        // MARK: Command tools (10)
+        // MARK: Command tools (routed through FacturacionStore actor)
 
         case "configurar_negocio":
-            return FacturaActions.configurarNegocio(
+            return await FacturacionStore.shared.configurarNegocio(
                 ConfigurarNegocioParams(
                     nombre: arguments["nombre"] as? String ?? "",
                     nif: arguments["nif"] as? String ?? "",
@@ -665,12 +665,11 @@ extension CloudToolSchemas {
                     codigoPostal: arguments["codigoPostal"] as? String ?? "",
                     telefono: arguments["telefono"] as? String ?? "",
                     email: arguments["email"] as? String ?? ""
-                ),
-                modelContext: modelContext
+                )
             )
 
         case "crear_cliente":
-            return FacturaActions.crearCliente(
+            return await FacturacionStore.shared.crearCliente(
                 CrearClienteParams(
                     nombre: arguments["nombre"] as? String ?? "",
                     nif: arguments["nif"] as? String ?? "",
@@ -678,20 +677,18 @@ extension CloudToolSchemas {
                     email: arguments["email"] as? String ?? "",
                     direccion: arguments["direccion"] as? String ?? "",
                     ciudad: arguments["ciudad"] as? String ?? ""
-                ),
-                modelContext: modelContext
+                )
             )
 
         case "buscar_cliente":
-            return FacturaActions.buscarCliente(
+            return await FacturacionStore.shared.buscarCliente(
                 BuscarClienteParams(
                     consulta: arguments["consulta"] as? String ?? ""
-                ),
-                modelContext: modelContext
+                )
             )
 
         case "crear_articulo":
-            return FacturaActions.crearArticulo(
+            return await FacturacionStore.shared.crearArticulo(
                 CrearArticuloParams(
                     nombre: arguments["nombre"] as? String ?? "",
                     precioUnitario: arguments["precioUnitario"] as? Double ?? 0,
@@ -700,77 +697,69 @@ extension CloudToolSchemas {
                     proveedor: arguments["proveedor"] as? String ?? "",
                     precioCoste: arguments["precioCoste"] as? Double ?? 0,
                     etiquetas: arguments["etiquetas"] as? String ?? ""
-                ),
-                modelContext: modelContext
+                )
             )
 
         case "buscar_articulo":
-            return FacturaActions.buscarArticulo(
+            return await FacturacionStore.shared.buscarArticulo(
                 BuscarArticuloParams(
                     consulta: arguments["consulta"] as? String ?? ""
-                ),
-                modelContext: modelContext
+                )
             )
 
         case "crear_factura":
-            return FacturaActions.crearFactura(
+            return await FacturacionStore.shared.crearFactura(
                 CrearFacturaParams(
                     nombreCliente: arguments["nombreCliente"] as? String ?? "",
                     articulosTexto: arguments["articulosTexto"] as? String ?? "",
                     descuento: arguments["descuento"] as? Double ?? 0,
                     observaciones: arguments["observaciones"] as? String ?? "",
                     esPresupuesto: arguments["esPresupuesto"] as? Bool ?? false
-                ),
-                modelContext: modelContext
+                )
             )
 
         case "marcar_pagada":
-            return FacturaActions.marcarPagada(
+            return await FacturacionStore.shared.marcarPagada(
                 MarcarPagadaParams(
                     identificador: arguments["identificador"] as? String ?? ""
-                ),
-                modelContext: modelContext
+                )
             )
 
         case "anular_factura":
-            return FacturaActions.anularFactura(
+            return await FacturacionStore.shared.anularFactura(
                 AnularFacturaParams(
                     identificador: arguments["identificador"] as? String ?? ""
-                ),
-                modelContext: modelContext
+                )
             )
 
         case "importar_datos":
-            return FacturaActions.importarDatos(
+            return await FacturacionStore.shared.importarDatos(
                 ImportarDatosParams(
                     tipo: arguments["tipo"] as? String ?? "articulos"
-                ),
-                modelContext: modelContext
+                )
             )
 
         case "consultar_resumen":
-            return FacturaActions.consultarResumen(
+            return await FacturacionStore.shared.consultarResumen(
                 ConsultarResumenParams(
                     tipo: arguments["tipo"] as? String ?? "general"
-                ),
-                modelContext: modelContext
+                )
             )
 
         case "registrar_gasto":
-            return FacturaActions.registrarGasto(
+            return await FacturacionStore.shared.registrarGasto(
                 RegistrarGastoParams(
                     concepto: arguments["concepto"] as? String ?? "",
                     importe: arguments["importe"] as? Double ?? 0,
                     categoria: arguments["categoria"] as? String ?? "otros",
                     proveedor: arguments["proveedor"] as? String ?? ""
-                ),
-                modelContext: modelContext
+                )
             )
 
         case "deshacer":
-            return FacturaActions.deshacerUltimaAccion(modelContext: modelContext)
+            return await FacturacionStore.shared.deshacerUltimaAccion()
 
-        // MARK: Edit tools (4)
+        // MARK: Edit tools (4) — stay on MainActor via FacturaActions
 
         case "modificar_linea":
             guard let factura, let onUpdate else {

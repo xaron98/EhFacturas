@@ -68,8 +68,8 @@ final class OpenAIProvider: AIProvider {
                     toolArguments = parsed
                 }
 
-                // Execute tool on MainActor
-                let toolResult = CloudToolSchemas.executeTool(
+                // Execute tool (command tools run on FacturacionStore actor, edit tools on MainActor)
+                let toolResult = await CloudToolSchemas.executeTool(
                     name: toolName,
                     arguments: toolArguments,
                     modelContext: modelContext,

@@ -1,5 +1,9 @@
 # FacturaApp — Guía para Claude
 
+## RESTRICCIONES
+- **NO hacer `git push`** hasta que el usuario lo diga explícitamente.
+- Solo commit local permitido, pero **NUNCA push sin permiso**.
+
 ## Proyecto
 App de facturación voice-first para autónomos y pequeñas empresas en España. iOS 26+ / macOS 26+ (Mac Catalyst).
 Cumplimiento VeriFactu completo (Real Decreto 1007/2023) — hash chain, XML, SOAP, firma XMLDSig.

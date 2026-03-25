@@ -52,8 +52,8 @@ final class ClaudeAIProvider: AIProvider {
                 let toolInput = toolUse["input"] as? [String: Any] ?? [:]
                 let toolUseId = toolUse["id"] as? String ?? ""
 
-                // Execute tool on MainActor
-                let toolResult = CloudToolSchemas.executeTool(
+                // Execute tool (command tools run on FacturacionStore actor, edit tools on MainActor)
+                let toolResult = await CloudToolSchemas.executeTool(
                     name: toolName,
                     arguments: toolInput,
                     modelContext: modelContext,

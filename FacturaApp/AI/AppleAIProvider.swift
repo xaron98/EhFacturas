@@ -66,21 +66,21 @@ final class AppleAIProvider: AIProvider {
                 ]
             ) { systemPrompt }
         } else {
-            // Command mode — 11 tools
+            // Command mode — 12 tools (routed through FacturacionStore actor)
             session = LanguageModelSession(
                 tools: [
-                    AppleConfigurarNegocioTool(modelContext: modelContext),
-                    AppleCrearClienteTool(modelContext: modelContext),
-                    AppleBuscarClienteTool(modelContext: modelContext),
-                    AppleCrearArticuloTool(modelContext: modelContext),
-                    AppleBuscarArticuloTool(modelContext: modelContext),
-                    AppleCrearFacturaTool(modelContext: modelContext),
-                    AppleMarcarPagadaTool(modelContext: modelContext),
-                    AppleAnularFacturaTool(modelContext: modelContext),
-                    AppleImportarDatosTool(modelContext: modelContext),
-                    AppleConsultarResumenTool(modelContext: modelContext),
-                    AppleRegistrarGastoTool(modelContext: modelContext),
-                    AppleDeshacerTool(modelContext: modelContext)
+                    AppleConfigurarNegocioTool(),
+                    AppleCrearClienteTool(),
+                    AppleBuscarClienteTool(),
+                    AppleCrearArticuloTool(),
+                    AppleBuscarArticuloTool(),
+                    AppleCrearFacturaTool(),
+                    AppleMarcarPagadaTool(),
+                    AppleAnularFacturaTool(),
+                    AppleImportarDatosTool(),
+                    AppleConsultarResumenTool(),
+                    AppleRegistrarGastoTool(),
+                    AppleDeshacerTool()
                 ]
             ) { systemPrompt }
         }
@@ -92,7 +92,7 @@ final class AppleAIProvider: AIProvider {
 // MARK: AppleConfigurarNegocioTool
 
 @available(iOS 26, *)
-struct AppleConfigurarNegocioTool: Tool, @unchecked Sendable {
+struct AppleConfigurarNegocioTool: Tool {
     let name = "configurar_negocio"
     let description = """
         Configura los datos del negocio del autónomo. Usa esta herramienta cuando el usuario \
@@ -120,10 +120,8 @@ struct AppleConfigurarNegocioTool: Tool, @unchecked Sendable {
         var email: String
     }
 
-    let modelContext: ModelContext
-
     func call(arguments: Arguments) async throws -> String {
-        await MainActor.run { FacturaActions.configurarNegocio(
+        await FacturacionStore.shared.configurarNegocio(
             ConfigurarNegocioParams(
                 nombre: arguments.nombre,
                 nif: arguments.nif,
@@ -133,16 +131,15 @@ struct AppleConfigurarNegocioTool: Tool, @unchecked Sendable {
                 codigoPostal: arguments.codigoPostal,
                 telefono: arguments.telefono,
                 email: arguments.email
-            ),
-            modelContext: modelContext
-        ) }
+            )
+        )
     }
 }
 
 // MARK: AppleCrearClienteTool
 
 @available(iOS 26, *)
-struct AppleCrearClienteTool: Tool, @unchecked Sendable {
+struct AppleCrearClienteTool: Tool {
     let name = "crear_cliente"
     let description = """
         Crea un nuevo cliente en la base de datos. Usa esta herramienta cuando el usuario \
@@ -166,10 +163,8 @@ struct AppleCrearClienteTool: Tool, @unchecked Sendable {
         var ciudad: String
     }
 
-    let modelContext: ModelContext
-
     func call(arguments: Arguments) async throws -> String {
-        await MainActor.run { FacturaActions.crearCliente(
+        await FacturacionStore.shared.crearCliente(
             CrearClienteParams(
                 nombre: arguments.nombre,
                 nif: arguments.nif,
@@ -177,16 +172,15 @@ struct AppleCrearClienteTool: Tool, @unchecked Sendable {
                 email: arguments.email,
                 direccion: arguments.direccion,
                 ciudad: arguments.ciudad
-            ),
-            modelContext: modelContext
-        ) }
+            )
+        )
     }
 }
 
 // MARK: AppleBuscarClienteTool
 
 @available(iOS 26, *)
-struct AppleBuscarClienteTool: Tool, @unchecked Sendable {
+struct AppleBuscarClienteTool: Tool {
     let name = "buscar_cliente"
     let description = """
         Busca clientes en la base de datos por nombre o teléfono. \
@@ -200,20 +194,17 @@ struct AppleBuscarClienteTool: Tool, @unchecked Sendable {
         var consulta: String
     }
 
-    let modelContext: ModelContext
-
     func call(arguments: Arguments) async throws -> String {
-        await MainActor.run { FacturaActions.buscarCliente(
-            BuscarClienteParams(consulta: arguments.consulta),
-            modelContext: modelContext
-        ) }
+        await FacturacionStore.shared.buscarCliente(
+            BuscarClienteParams(consulta: arguments.consulta)
+        )
     }
 }
 
 // MARK: AppleCrearArticuloTool
 
 @available(iOS 26, *)
-struct AppleCrearArticuloTool: Tool, @unchecked Sendable {
+struct AppleCrearArticuloTool: Tool {
     let name = "crear_articulo"
     let description = """
         Crea un nuevo artículo, producto o servicio en el catálogo. \
@@ -240,10 +231,8 @@ struct AppleCrearArticuloTool: Tool, @unchecked Sendable {
         var etiquetas: String
     }
 
-    let modelContext: ModelContext
-
     func call(arguments: Arguments) async throws -> String {
-        await MainActor.run { FacturaActions.crearArticulo(
+        await FacturacionStore.shared.crearArticulo(
             CrearArticuloParams(
                 nombre: arguments.nombre,
                 precioUnitario: arguments.precioUnitario,
@@ -252,16 +241,15 @@ struct AppleCrearArticuloTool: Tool, @unchecked Sendable {
                 proveedor: arguments.proveedor,
                 precioCoste: arguments.precioCoste,
                 etiquetas: arguments.etiquetas
-            ),
-            modelContext: modelContext
-        ) }
+            )
+        )
     }
 }
 
 // MARK: AppleBuscarArticuloTool
 
 @available(iOS 26, *)
-struct AppleBuscarArticuloTool: Tool, @unchecked Sendable {
+struct AppleBuscarArticuloTool: Tool {
     let name = "buscar_articulo"
     let description = """
         Busca artículos en el catálogo por nombre, referencia o etiquetas. \
@@ -275,20 +263,17 @@ struct AppleBuscarArticuloTool: Tool, @unchecked Sendable {
         var consulta: String
     }
 
-    let modelContext: ModelContext
-
     func call(arguments: Arguments) async throws -> String {
-        await MainActor.run { FacturaActions.buscarArticulo(
-            BuscarArticuloParams(consulta: arguments.consulta),
-            modelContext: modelContext
-        ) }
+        await FacturacionStore.shared.buscarArticulo(
+            BuscarArticuloParams(consulta: arguments.consulta)
+        )
     }
 }
 
 // MARK: AppleCrearFacturaTool
 
 @available(iOS 26, *)
-struct AppleCrearFacturaTool: Tool, @unchecked Sendable {
+struct AppleCrearFacturaTool: Tool {
     let name = "crear_factura"
     let description = """
         Crea una nueva factura borrador o presupuesto con un cliente y artículos. \
@@ -311,26 +296,23 @@ struct AppleCrearFacturaTool: Tool, @unchecked Sendable {
         var esPresupuesto: Bool
     }
 
-    let modelContext: ModelContext
-
     func call(arguments: Arguments) async throws -> String {
-        await MainActor.run { FacturaActions.crearFactura(
+        await FacturacionStore.shared.crearFactura(
             CrearFacturaParams(
                 nombreCliente: arguments.nombreCliente,
                 articulosTexto: arguments.articulosTexto,
                 descuento: arguments.descuento,
                 observaciones: arguments.observaciones,
                 esPresupuesto: arguments.esPresupuesto
-            ),
-            modelContext: modelContext
-        ) }
+            )
+        )
     }
 }
 
 // MARK: AppleMarcarPagadaTool
 
 @available(iOS 26, *)
-struct AppleMarcarPagadaTool: Tool, @unchecked Sendable {
+struct AppleMarcarPagadaTool: Tool {
     let name = "marcar_pagada"
     let description = """
         Marca una factura como pagada/cobrada. \
@@ -344,20 +326,17 @@ struct AppleMarcarPagadaTool: Tool, @unchecked Sendable {
         var identificador: String
     }
 
-    let modelContext: ModelContext
-
     func call(arguments: Arguments) async throws -> String {
-        await MainActor.run { FacturaActions.marcarPagada(
-            MarcarPagadaParams(identificador: arguments.identificador),
-            modelContext: modelContext
-        ) }
+        await FacturacionStore.shared.marcarPagada(
+            MarcarPagadaParams(identificador: arguments.identificador)
+        )
     }
 }
 
 // MARK: AppleAnularFacturaTool
 
 @available(iOS 26, *)
-struct AppleAnularFacturaTool: Tool, @unchecked Sendable {
+struct AppleAnularFacturaTool: Tool {
     let name = "anular_factura"
     let description = """
         Anula una factura. Usa esta herramienta cuando el usuario quiera anular, cancelar o borrar una factura. \
@@ -370,20 +349,17 @@ struct AppleAnularFacturaTool: Tool, @unchecked Sendable {
         var identificador: String
     }
 
-    let modelContext: ModelContext
-
     func call(arguments: Arguments) async throws -> String {
-        await MainActor.run { FacturaActions.anularFactura(
-            AnularFacturaParams(identificador: arguments.identificador),
-            modelContext: modelContext
-        ) }
+        await FacturacionStore.shared.anularFactura(
+            AnularFacturaParams(identificador: arguments.identificador)
+        )
     }
 }
 
 // MARK: AppleImportarDatosTool
 
 @available(iOS 26, *)
-struct AppleImportarDatosTool: Tool, @unchecked Sendable {
+struct AppleImportarDatosTool: Tool {
     let name = "importar_datos"
     let description = """
         Abre el importador de datos CSV/Excel. Usa esta herramienta cuando el usuario \
@@ -398,20 +374,17 @@ struct AppleImportarDatosTool: Tool, @unchecked Sendable {
         var tipo: String
     }
 
-    let modelContext: ModelContext
-
     func call(arguments: Arguments) async throws -> String {
-        await MainActor.run { FacturaActions.importarDatos(
-            ImportarDatosParams(tipo: arguments.tipo),
-            modelContext: modelContext
-        ) }
+        await FacturacionStore.shared.importarDatos(
+            ImportarDatosParams(tipo: arguments.tipo)
+        )
     }
 }
 
 // MARK: AppleConsultarResumenTool
 
 @available(iOS 26, *)
-struct AppleConsultarResumenTool: Tool, @unchecked Sendable {
+struct AppleConsultarResumenTool: Tool {
     let name = "consultar_resumen"
     let description = """
         Consulta el resumen del estado actual: facturas pendientes, cobradas, vencidas, \
@@ -426,20 +399,17 @@ struct AppleConsultarResumenTool: Tool, @unchecked Sendable {
         var tipo: String
     }
 
-    let modelContext: ModelContext
-
     func call(arguments: Arguments) async throws -> String {
-        await MainActor.run { FacturaActions.consultarResumen(
-            ConsultarResumenParams(tipo: arguments.tipo),
-            modelContext: modelContext
-        ) }
+        await FacturacionStore.shared.consultarResumen(
+            ConsultarResumenParams(tipo: arguments.tipo)
+        )
     }
 }
 
 // MARK: AppleDeshacerTool
 
 @available(iOS 26, *)
-struct AppleDeshacerTool: Tool, @unchecked Sendable {
+struct AppleDeshacerTool: Tool {
     let name = "deshacer"
     let description = """
         Deshace la última acción (crear cliente, artículo o factura). \
@@ -452,17 +422,15 @@ struct AppleDeshacerTool: Tool, @unchecked Sendable {
         var motivo: String
     }
 
-    let modelContext: ModelContext
-
     func call(arguments: Arguments) async throws -> String {
-        await MainActor.run { FacturaActions.deshacerUltimaAccion(modelContext: modelContext) }
+        await FacturacionStore.shared.deshacerUltimaAccion()
     }
 }
 
 // MARK: AppleRegistrarGastoTool
 
 @available(iOS 26, *)
-struct AppleRegistrarGastoTool: Tool, @unchecked Sendable {
+struct AppleRegistrarGastoTool: Tool {
     let name = "registrar_gasto"
     let description = """
         Registra un gasto o compra del negocio. Usa esta herramienta cuando el usuario diga que ha \
@@ -482,18 +450,15 @@ struct AppleRegistrarGastoTool: Tool, @unchecked Sendable {
         var proveedor: String
     }
 
-    let modelContext: ModelContext
-
     func call(arguments: Arguments) async throws -> String {
-        await MainActor.run { FacturaActions.registrarGasto(
+        await FacturacionStore.shared.registrarGasto(
             RegistrarGastoParams(
                 concepto: arguments.concepto,
                 importe: arguments.importe,
                 categoria: arguments.categoria,
                 proveedor: arguments.proveedor
-            ),
-            modelContext: modelContext
-        ) }
+            )
+        )
     }
 }
 
