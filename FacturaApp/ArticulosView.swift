@@ -84,6 +84,7 @@ struct ArticulosListView: View {
                         } label: {
                             ArticuloRowView(articulo: art)
                         }
+                        .buttonStyle(.plain)
                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                             Button(role: .destructive) {
                                 art.activo = false

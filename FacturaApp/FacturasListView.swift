@@ -144,6 +144,7 @@ struct FacturasListView: View {
                             } label: {
                                 FacturaRowView(factura: factura)
                             }
+                            .buttonStyle(.plain)
                             .swipeActions(edge: .leading) {
                                 if factura.estado == .emitida {
                                     Button {

@@ -46,6 +46,7 @@ struct ClientesListView: View {
                         } label: {
                             ClienteRowView(cliente: cliente)
                         }
+                        .buttonStyle(.plain)
                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                             Button(role: .destructive) {
                                 desactivarCliente(cliente)
