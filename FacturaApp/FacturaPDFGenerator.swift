@@ -294,7 +294,7 @@ enum FacturaPDFGenerator {
 
         // Descuento global
         if factura.descuentoGlobalPorcentaje > 0 {
-            let descuento = factura.lineas.reduce(0) { $0 + $1.subtotal } * factura.descuentoGlobalPorcentaje / 100
+            let descuento = factura.lineasArray.reduce(0) { $0 + $1.subtotal } * factura.descuentoGlobalPorcentaje / 100
             let redAttr: [NSAttributedString.Key: Any] = [
                 .font: UIFont.systemFont(ofSize: 9, weight: .medium),
                 .foregroundColor: FacturaPDFConfig.rojo
@@ -407,7 +407,7 @@ enum FacturaPDFGenerator {
         qrImage.draw(in: qrRect)
 
         // Texto debajo del QR
-        let tieneHash = !factura.registros.isEmpty
+        let tieneHash = !(factura.registros ?? []).isEmpty
         let textoQR = tieneHash ? "Factura verificable" : "Factura"
         let qrTextAttr: [NSAttributedString.Key: Any] = [
             .font: UIFont.systemFont(ofSize: 6, weight: .medium),

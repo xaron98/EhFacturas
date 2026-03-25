@@ -302,7 +302,8 @@ enum FacturaActions {
                     precioUnitario: articulo.precioUnitario,
                     porcentajeIVA: articulo.tipoIVA.porcentaje
                 )
-                factura.lineas.append(linea)
+                if factura.lineas == nil { factura.lineas = [] }
+                factura.lineas!.append(linea)
                 lineasCreadas.append("\(String(format: "%.0f", cantidad)) \(articulo.unidad.abreviatura) × \(articulo.nombre) = \(String(format: "%.2f", linea.subtotal))€")
             } else {
                 let linea = LineaFactura(
@@ -312,7 +313,8 @@ enum FacturaActions {
                     precioUnitario: 0,
                     porcentajeIVA: 21.0
                 )
-                factura.lineas.append(linea)
+                if factura.lineas == nil { factura.lineas = [] }
+                factura.lineas!.append(linea)
                 lineasNoEncontradas.append(termino)
             }
         }
@@ -439,8 +441,8 @@ enum FacturaActions {
     static func modificarLinea(_ params: ModificarLineaParams, factura: Factura, modelContext: ModelContext, onUpdate: @Sendable () -> Void) -> String {
         let busqueda = params.concepto.lowercased()
 
-        guard let linea = factura.lineas.first(where: { $0.concepto.lowercased().contains(busqueda) }) else {
-            let conceptos = factura.lineas.map { $0.concepto }.joined(separator: ", ")
+        guard let linea = factura.lineasArray.first(where: { $0.concepto.lowercased().contains(busqueda) }) else {
+            let conceptos = factura.lineasArray.map { $0.concepto }.joined(separator: ", ")
             return "No se encontró ninguna línea con '\(params.concepto)'. Líneas actuales: \(conceptos)"
         }
 
@@ -474,7 +476,7 @@ enum FacturaActions {
 
     static func anadirLinea(_ params: AnadirLineaParams, factura: Factura, modelContext: ModelContext, onUpdate: @Sendable () -> Void) -> String {
         let unidad = UnidadMedida(abreviatura: params.unidad) ?? .unidad
-        let siguienteOrden = (factura.lineas.map { $0.orden }.max() ?? -1) + 1
+        let siguienteOrden = (factura.lineasArray.map { $0.orden }.max() ?? -1) + 1
 
         let linea = LineaFactura(
             orden: siguienteOrden,
@@ -485,7 +487,8 @@ enum FacturaActions {
             porcentajeIVA: 21.0
         )
 
-        factura.lineas.append(linea)
+        if factura.lineas == nil { factura.lineas = [] }
+                factura.lineas!.append(linea)
         recalcularYGuardar(factura: factura, modelContext: modelContext, onUpdate: onUpdate)
 
         let subtotal = params.cantidad * params.precioUnitario
@@ -497,18 +500,18 @@ enum FacturaActions {
     static func eliminarLinea(_ params: EliminarLineaParams, factura: Factura, modelContext: ModelContext, onUpdate: @Sendable () -> Void) -> String {
         let busqueda = params.concepto.lowercased()
 
-        guard let linea = factura.lineas.first(where: { $0.concepto.lowercased().contains(busqueda) }) else {
-            let conceptos = factura.lineas.map { $0.concepto }.joined(separator: ", ")
+        guard let linea = factura.lineasArray.first(where: { $0.concepto.lowercased().contains(busqueda) }) else {
+            let conceptos = factura.lineasArray.map { $0.concepto }.joined(separator: ", ")
             return "No se encontró ninguna línea con '\(params.concepto)'. Líneas actuales: \(conceptos)"
         }
 
         let conceptoEliminado = linea.concepto
-        factura.lineas.removeAll { $0.persistentModelID == linea.persistentModelID }
+        factura.lineas?.removeAll { $0.persistentModelID == linea.persistentModelID }
         modelContext.delete(linea)
 
         recalcularYGuardar(factura: factura, modelContext: modelContext, onUpdate: onUpdate)
 
-        return "Línea '\(conceptoEliminado)' eliminada. Quedan \(factura.lineas.count) línea(s). Nuevo total factura: \(String(format: "%.2f", factura.totalFactura))€."
+        return "Línea '\(conceptoEliminado)' eliminada. Quedan \(factura.lineasArray.count) línea(s). Nuevo total factura: \(String(format: "%.2f", factura.totalFactura))€."
     }
 
     // MARK: - cambiarDescuento (edit tool)

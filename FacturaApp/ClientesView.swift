@@ -149,8 +149,8 @@ struct ClienteRowView: View {
             Spacer()
 
             // Badge con número de facturas
-            if !cliente.facturas.isEmpty {
-                Text("\(cliente.facturas.count)")
+            if !(cliente.facturas ?? []).isEmpty {
+                Text("\((cliente.facturas ?? []).count)")
                     .font(.caption2)
                     .fontWeight(.medium)
                     .padding(.horizontal, 8)
@@ -241,9 +241,9 @@ struct ClienteDetalleView: View {
             }
 
             // Últimas facturas
-            if !cliente.facturas.isEmpty {
-                Section("Facturas (\(cliente.facturas.count))") {
-                    ForEach(cliente.facturas.sorted(by: { $0.fecha > $1.fecha }).prefix(5), id: \.persistentModelID) { factura in
+            if !(cliente.facturas ?? []).isEmpty {
+                Section("Facturas (\((cliente.facturas ?? []).count))") {
+                    ForEach((cliente.facturas ?? []).sorted(by: { $0.fecha > $1.fecha }).prefix(5), id: \.persistentModelID) { factura in
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(factura.numeroFactura)

@@ -353,7 +353,7 @@ struct FacturaDetalleView: View {
                         accionBoton("PDF", icono: "doc.richtext", color: .blue) {
                             generarYMostrarPDF()
                         }
-                        if factura.estado != .borrador && !factura.registros.isEmpty {
+                        if factura.estado != .borrador && !(factura.registros ?? []).isEmpty {
                             accionBoton("XML", icono: "doc.text", color: .orange) {
                                 generarXMLDetalle()
                             }
@@ -426,7 +426,7 @@ struct FacturaDetalleView: View {
             }
 
             // Líneas
-            Section("Líneas (\(factura.lineas.count))") {
+            Section("Líneas (\(factura.lineasArray.count))") {
                 ForEach(factura.lineasOrdenadas) { linea in
                     VStack(alignment: .leading, spacing: 4) {
                         HStack {
@@ -464,7 +464,7 @@ struct FacturaDetalleView: View {
                     HStack {
                         Text("Descuento (\(String(format: "%.0f", factura.descuentoGlobalPorcentaje))%)")
                         Spacer()
-                        let descuento = factura.lineas.reduce(0) { $0 + $1.subtotal } * factura.descuentoGlobalPorcentaje / 100
+                        let descuento = factura.lineasArray.reduce(0) { $0 + $1.subtotal } * factura.descuentoGlobalPorcentaje / 100
                         Text("-\(Formateadores.formatEuros(descuento))")
                             .foregroundStyle(.red)
                     }
@@ -581,7 +581,7 @@ struct FacturaDetalleView: View {
     private func generarXMLDetalle() {
         let desc = FetchDescriptor<Negocio>()
         guard let negocio = try? modelContext.fetch(desc).first else { return }
-        guard let registro = factura.registros.sorted(by: { $0.fechaHoraGeneracion > $1.fechaHoraGeneracion }).first else { return }
+        guard let registro = (factura.registros ?? []).sorted(by: { $0.fechaHoraGeneracion > $1.fechaHoraGeneracion }).first else { return }
         let xml = VeriFactuXMLGenerator.generarXMLRegistro(registro: registro, negocio: negocio)
         xmlData = xml.data(using: .utf8)
         mostrarShareXML = true
@@ -654,7 +654,8 @@ struct FacturaDetalleView: View {
                 descuentoPorcentaje: lineaOrig.descuentoPorcentaje,
                 porcentajeIVA: lineaOrig.porcentajeIVA
             )
-            nueva.lineas.append(copia)
+            if nueva.lineas == nil { nueva.lineas = [] }
+            nueva.lineas!.append(copia)
         }
 
         nueva.recalcularTotales(irpfPorcentaje: negocio.irpfPorcentaje, aplicarIRPF: negocio.aplicarIRPF)

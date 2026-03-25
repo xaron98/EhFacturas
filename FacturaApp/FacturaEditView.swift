@@ -59,9 +59,9 @@ struct FacturaEditView: View {
                         }
                     }
 
-                    if !factura.registros.isEmpty {
+                    if !(factura.registros ?? []).isEmpty {
                         Section("VeriFactu") {
-                            ForEach(factura.registros.sorted(by: { $0.fechaHoraGeneracion < $1.fechaHoraGeneracion }), id: \.persistentModelID) { registro in
+                            ForEach((factura.registros ?? []).sorted(by: { $0.fechaHoraGeneracion < $1.fechaHoraGeneracion }), id: \.persistentModelID) { registro in
                                 VStack(alignment: .leading, spacing: 4) {
                                     HStack {
                                         Text(registro.tipoRegistro == .alta ? "Registro de alta" : "Registro de anulación")
@@ -197,7 +197,7 @@ struct FacturaEditView: View {
                         }
                     }
 
-                    if factura.estado != .borrador && !factura.registros.isEmpty {
+                    if factura.estado != .borrador && !(factura.registros ?? []).isEmpty {
                         miniBoton(titulo: "XML", icono: "doc.text", color: .orange) {
                             generarXML()
                         }
@@ -245,9 +245,10 @@ struct FacturaEditView: View {
 
     private var botonAnadirLinea: some View {
         Button {
-            let siguienteOrden = (factura.lineas.map { $0.orden }.max() ?? -1) + 1
+            let siguienteOrden = (factura.lineasArray.map { $0.orden }.max() ?? -1) + 1
             let nueva = LineaFactura(orden: siguienteOrden, concepto: "", cantidad: 1, precioUnitario: 0)
-            factura.lineas.append(nueva)
+            if factura.lineas == nil { factura.lineas = [] }
+            factura.lineas!.append(nueva)
             recalcular()
             refreshTrigger += 1
         } label: {
@@ -284,7 +285,7 @@ struct FacturaEditView: View {
         let ordenadas = factura.lineasOrdenadas
         for index in offsets {
             let linea = ordenadas[index]
-            factura.lineas.removeAll { $0.persistentModelID == linea.persistentModelID }
+            factura.lineas?.removeAll { $0.persistentModelID == linea.persistentModelID }
             modelContext.delete(linea)
         }
         recalcular()
@@ -298,7 +299,7 @@ struct FacturaEditView: View {
             filaTotal("Base imponible", valor: factura.baseImponible)
 
             if factura.descuentoGlobalPorcentaje > 0 {
-                let descuento = factura.lineas.reduce(0) { $0 + $1.subtotal } * factura.descuentoGlobalPorcentaje / 100
+                let descuento = factura.lineasArray.reduce(0) { $0 + $1.subtotal } * factura.descuentoGlobalPorcentaje / 100
                 HStack {
                     Text("Descuento (\(String(format: "%.0f", factura.descuentoGlobalPorcentaje))%)")
                         .font(.subheadline)
@@ -456,7 +457,7 @@ struct FacturaEditView: View {
             mostrarErrorNegocio = true
             return
         }
-        guard let registro = factura.registros.sorted(by: { $0.fechaHoraGeneracion > $1.fechaHoraGeneracion }).first else { return }
+        guard let registro = (factura.registros ?? []).sorted(by: { $0.fechaHoraGeneracion > $1.fechaHoraGeneracion }).first else { return }
         let xml = VeriFactuXMLGenerator.generarXMLRegistro(registro: registro, negocio: negocio)
         if let data = xml.data(using: .utf8) {
             xmlDataParaCompartir = data

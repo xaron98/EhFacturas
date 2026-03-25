@@ -201,7 +201,7 @@ final class Cliente {
     var email: String = ""
     var observaciones: String = ""
     @Relationship(deleteRule: .nullify, inverse: \Factura.cliente)
-    var facturas: [Factura] = []
+    var facturas: [Factura]?
     var fechaCreacion: Date = Date.now
     var fechaModificacion: Date = Date.now
     var activo: Bool = true
@@ -237,7 +237,7 @@ final class Categoria {
     var icono: String = "folder"
     var orden: Int = 0
     @Relationship(deleteRule: .nullify, inverse: \Articulo.categoria)
-    var articulos: [Articulo] = []
+    var articulos: [Articulo]?
 
     init(nombre: String = "", icono: String = "folder", orden: Int = 0) {
         self.nombre = nombre
@@ -278,7 +278,7 @@ final class Articulo {
     var fechaCreacion: Date = Date.now
     var fechaModificacion: Date = Date.now
     @Relationship(deleteRule: .nullify, inverse: \LineaFactura.articulo)
-    var lineasFactura: [LineaFactura] = []
+    var lineasFactura: [LineaFactura]?
 
     init(referencia: String = "", nombre: String = "", descripcion: String = "",
          precioUnitario: Double = 0, precioCoste: Double = 0,
@@ -318,7 +318,7 @@ final class Factura {
     var clienteNIF: String = ""
     var clienteDireccion: String = ""
     @Relationship(deleteRule: .cascade, inverse: \LineaFactura.factura)
-    var lineas: [LineaFactura] = []
+    var lineas: [LineaFactura]?
     var baseImponible: Double = 0
     var totalIVA: Double = 0
     var totalIRPF: Double = 0
@@ -333,9 +333,9 @@ final class Factura {
     var tipoFactura: TipoFacturaVF = TipoFacturaVF.completa
     @Relationship(inverse: \Factura.facturasRectificativas)
     var facturaRectificada: Factura?
-    var facturasRectificativas: [Factura] = []
+    var facturasRectificativas: [Factura]?
     @Relationship(deleteRule: .cascade, inverse: \RegistroFacturacion.factura)
-    var registros: [RegistroFacturacion] = []
+    var registros: [RegistroFacturacion]?
 
     init(numeroFactura: String = "", cliente: Cliente? = nil,
          estado: EstadoFactura = .borrador,
@@ -361,13 +361,15 @@ final class Factura {
     }
 
     func recalcularTotales(irpfPorcentaje: Double = 15.0, aplicarIRPF: Bool = false) {
+        let items = lineasArray
+
         // Recalcular subtotales de cada línea
-        for linea in lineas {
+        for linea in items {
             linea.recalcular()
         }
 
         // Base imponible = suma de subtotales
-        let sumaSubtotales = lineas.reduce(0) { $0 + $1.subtotal }
+        let sumaSubtotales = items.reduce(0) { $0 + $1.subtotal }
 
         // Aplicar descuento global
         let descuento = sumaSubtotales * descuentoGlobalPorcentaje / 100
@@ -375,13 +377,12 @@ final class Factura {
 
         // Calcular IVA por línea (respetando porcentaje individual)
         if descuentoGlobalPorcentaje > 0 {
-            // Distribuir proporcionalmente el descuento
             let factor = baseImponible / max(sumaSubtotales, 0.01)
-            totalIVA = lineas.reduce(0) { total, linea in
+            totalIVA = items.reduce(0) { total, linea in
                 total + (linea.subtotal * factor * linea.porcentajeIVA / 100)
             }
         } else {
-            totalIVA = lineas.reduce(0) { total, linea in
+            totalIVA = items.reduce(0) { total, linea in
                 total + (linea.subtotal * linea.porcentajeIVA / 100)
             }
         }
@@ -396,12 +397,13 @@ final class Factura {
 
     /// Desglose de IVA por tipo para el PDF
     var desgloseIVA: [(porcentaje: Double, base: Double, cuota: Double)] {
+        let items = lineasArray
         var desglose: [Double: (base: Double, cuota: Double)] = [:]
         let factor = descuentoGlobalPorcentaje > 0
-            ? baseImponible / max(lineas.reduce(0) { $0 + $1.subtotal }, 0.01)
+            ? baseImponible / max(items.reduce(0) { $0 + $1.subtotal }, 0.01)
             : 1.0
 
-        for linea in lineas {
+        for linea in items {
             let baseLinea = linea.subtotal * factor
             let cuotaLinea = baseLinea * linea.porcentajeIVA / 100
             let existing = desglose[linea.porcentajeIVA] ?? (base: 0, cuota: 0)
@@ -413,8 +415,13 @@ final class Factura {
             .sorted { $0.porcentaje > $1.porcentaje }
     }
 
+    /// Safe accessor for lineas (unwraps optional)
+    var lineasArray: [LineaFactura] {
+        lineas ?? []
+    }
+
     var lineasOrdenadas: [LineaFactura] {
-        lineas.sorted { $0.orden < $1.orden }
+        lineasArray.sorted { $0.orden < $1.orden }
     }
 }
 

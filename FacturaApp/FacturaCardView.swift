@@ -38,7 +38,7 @@ struct FacturaCardView: View {
                     }
                     Divider()
                     HStack {
-                        Text("\(factura.lineas.count) línea(s)")
+                        Text("\(factura.lineasArray.count) línea(s)")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                         Spacer()
