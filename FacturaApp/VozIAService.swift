@@ -6,7 +6,7 @@ import AVFoundation
 
 @MainActor
 final class VozIAService: ObservableObject {
-    static let shared = VozIAService()
+    static var shared = VozIAService()
 
     @Published var vozActiva: Bool {
         didSet { UserDefaults.standard.set(vozActiva, forKey: "vozIA_activa") }

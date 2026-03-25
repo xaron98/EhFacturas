@@ -8,7 +8,7 @@ import StoreKit
 @Observable
 final class SubscriptionManager {
 
-    static let shared = SubscriptionManager()
+    static var shared = SubscriptionManager()
 
     private(set) var isProSubscriber = false
     private(set) var products: [Product] = []

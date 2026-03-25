@@ -1,6 +1,7 @@
 // VoiceMainView.swift
 // FacturaApp — Vista principal controlada por voz
 // Layout tipo chat: conversación arriba, micro abajo.
+// Sub-views extracted to ChatMessageView, CommandInputBar, WelcomeView.
 
 import SwiftUI
 import SwiftData
@@ -93,13 +94,22 @@ struct VoiceMainView: View {
                         LazyVStack(spacing: 12) {
                             // Mensaje de bienvenida si no hay mensajes
                             if mensajes.isEmpty && !procesando {
-                                bienvenidaView
+                                WelcomeView(
+                                    hayNegocio: hayNegocio,
+                                    estaEscuchando: speech.estaEscuchando,
+                                    nivelAudio: speech.nivelAudio,
+                                    permisoConecido: speech.permisoConecido,
+                                    onMicTap: { toggleMic() },
+                                    onEjemploTap: { ejemplo in enviarComando(ejemplo) }
+                                )
                             }
 
                             // Mensajes
                             ForEach(mensajes) { msg in
-                                mensajeView(msg)
-                                    .id(msg.id)
+                                ChatMessageView(msg: msg) { factura in
+                                    facturaParaEditar = factura
+                                }
+                                .id(msg.id)
                             }
 
                             // Indicador de procesando
@@ -161,9 +171,19 @@ struct VoiceMainView: View {
                 }
 
                 // Zona de entrada (abajo fija)
-                entradaView
+                CommandInputBar(
+                    textoManual: $textoManual,
+                    textoFocused: $textoFocused,
+                    estaEscuchando: speech.estaEscuchando,
+                    procesando: procesando,
+                    permisoConecido: speech.permisoConecido,
+                    onEnviar: { cmd in enviarComando(cmd) },
+                    onMicTap: { toggleMic() },
+                    onScannerTap: { mostrarScanner = true }
+                )
             }
         }
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         .task {
             animateGradient = true
             // Esperar un momento para que CloudKit sincronice datos
@@ -216,6 +236,18 @@ struct VoiceMainView: View {
                 mostrarImportador = true
                 aiService.solicitarImportacion = nil
             }
+        }
+    }
+
+    // MARK: - Toggle microphone
+
+    private func toggleMic() {
+        if speech.estaEscuchando {
+            speech.detenerEscucha()
+        } else if speech.permisoConecido {
+            speech.iniciarEscucha()
+        } else {
+            speech.solicitarPermisosYEscuchar()
         }
     }
 
@@ -316,332 +348,6 @@ struct VoiceMainView: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 10)
-    }
-
-    // MARK: - Bienvenida
-
-    private var bienvenidaView: some View {
-        VStack(spacing: 20) {
-            Spacer()
-
-            // App branding
-            VStack(spacing: 8) {
-                Image(systemName: "doc.text.fill")
-                    .font(.system(size: 40))
-                    .foregroundStyle(.blue.gradient)
-                Text("FacturaApp")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                Text(hayNegocio ? "Tu asistente de facturación" : "Configura tu negocio para empezar")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-
-            // Mic button
-            Button {
-                if speech.estaEscuchando {
-                    speech.detenerEscucha()
-                } else if speech.permisoConecido {
-                    speech.iniciarEscucha()
-                } else {
-                    speech.solicitarPermisosYEscuchar()
-                }
-            } label: {
-                ZStack {
-                    // Glass background
-                    Circle()
-                        .fill(Color(.secondarySystemBackground))
-                        .frame(width: 80, height: 80)
-                        .shadow(color: speech.estaEscuchando ? .purple.opacity(0.4) : .black.opacity(0.12), radius: speech.estaEscuchando ? 20 : 10)
-
-                    // Border
-                    Circle()
-                        .stroke(Color(.separator), lineWidth: 1)
-                        .frame(width: 80, height: 80)
-
-                    // Audio ring
-                    if speech.estaEscuchando {
-                        Circle()
-                            .stroke(lineWidth: 1.5)
-                            .foregroundStyle(.purple.opacity(0.5))
-                            .scaleEffect(1.0 + CGFloat(speech.nivelAudio) * 0.4)
-                            .animation(.easeOut(duration: 0.1), value: speech.nivelAudio)
-                            .frame(width: 80, height: 80)
-                    }
-
-                    Image(systemName: speech.estaEscuchando ? "waveform" : "mic.fill")
-                        .font(.system(size: 28, weight: .light))
-                        .foregroundStyle(speech.estaEscuchando ? .purple : .primary)
-                }
-            }
-            .scaleEffect(speech.estaEscuchando ? 1.1 : 1.0)
-            .animation(.spring(response: 0.4, dampingFraction: 0.5), value: speech.estaEscuchando)
-            .buttonStyle(.plain)
-            .accessibilityLabel(speech.estaEscuchando ? "Detener grabación" : "Activar micrófono")
-            .accessibilityHint("Pulsa para hablar un comando")
-
-            // Examples
-            VStack(spacing: 8) {
-                Text(hayNegocio ? "Prueba a decir:" : "Di algo como:")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                ForEach(ejemplos, id: \.self) { ejemplo in
-                    Button {
-                        enviarComando(ejemplo)
-                    } label: {
-                        Text(ejemplo)
-                            .font(.caption)
-                            .foregroundStyle(.primary)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 7)
-                            .background(Color(.secondarySystemBackground))
-                            .clipShape(Capsule())
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-
-            Spacer()
-        }
-    }
-
-    private var ejemplos: [String] {
-        if hayNegocio {
-            return [
-                "Añade un cliente Juan García, teléfono 612345678",
-                "Crea una factura para Juan con 3 bombillas LED",
-                "¿Cuánto tengo pendiente de cobrar?"
-            ]
-        } else {
-            return [
-                "Me llamo Juan García, NIF 12345678A, teléfono 612345678",
-                "Mi negocio es Instalaciones García, estoy en Madrid",
-                "Mi email es juan@garcia.es, estoy en la calle Mayor 5"
-            ]
-        }
-    }
-
-    // MARK: - Mensaje individual
-
-    @ViewBuilder
-    private func mensajeView(_ msg: MensajeChat) -> some View {
-        switch msg.tipo {
-        case .usuario:
-            HStack(alignment: .top, spacing: 10) {
-                Spacer()
-                Text(msg.texto)
-                    .font(.subheadline)
-                    .padding(12)
-                    .background(Color(.secondarySystemBackground))
-                    .foregroundStyle(.primary)
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-                Image(systemName: "person.circle.fill")
-                    .font(.title3)
-                    .foregroundStyle(.blue.opacity(0.5))
-            }
-            .transition(.asymmetric(insertion: .move(edge: .bottom).combined(with: .opacity), removal: .opacity))
-
-        case .ia:
-            HStack(alignment: .top, spacing: 10) {
-                Image(systemName: "sparkles")
-                    .font(.title3)
-                    .foregroundStyle(.purple)
-                HStack(spacing: 0) {
-                    RoundedRectangle(cornerRadius: 1.5)
-                        .fill(.purple.opacity(0.6))
-                        .frame(width: 3)
-                        .padding(.vertical, 6)
-                    VStack(alignment: .leading, spacing: 6) {
-                        if let accion = msg.accion {
-                            HStack(spacing: 4) {
-                                Image(systemName: iconoAccion(accion))
-                                    .font(.caption2)
-                                Text(tituloAccion(accion))
-                                    .font(.caption)
-                                    .fontWeight(.medium)
-                            }
-                            .foregroundStyle(colorAccion(accion))
-                        }
-                        Text(msg.texto)
-                            .font(.subheadline)
-                            .foregroundStyle(.primary)
-                    }
-                    .padding(12)
-                }
-                .background(Color(.tertiarySystemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 16))
-                Spacer()
-            }
-            .transition(.asymmetric(insertion: .move(edge: .bottom).combined(with: .opacity), removal: .opacity))
-
-        case .error:
-            HStack(alignment: .top, spacing: 10) {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.title3)
-                    .foregroundStyle(.orange)
-                Text(msg.texto)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .padding(12)
-                    .background(.orange.opacity(0.08))
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-                Spacer()
-            }
-            .transition(.asymmetric(insertion: .move(edge: .bottom).combined(with: .opacity), removal: .opacity))
-
-        case .factura:
-            if let fID = msg.facturaID {
-                FacturaChatCard(facturaID: fID, texto: msg.texto) { factura in
-                    facturaParaEditar = factura
-                }
-            }
-
-        case .sistema:
-            Text(msg.texto)
-                .font(.caption)
-                .foregroundStyle(.tertiary)
-                .frame(maxWidth: .infinity)
-                .transition(.asymmetric(insertion: .move(edge: .bottom).combined(with: .opacity), removal: .opacity))
-        }
-    }
-
-    // MARK: - Zona de entrada (abajo)
-
-    private var entradaView: some View {
-        HStack(spacing: 10) {
-            // Text field
-            TextField("Escribe un comando...", text: $textoManual)
-                .font(.subheadline)
-                .textFieldStyle(.plain)
-                .focused($textoFocused)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-                .onSubmit {
-                    if !textoManual.trimmingCharacters(in: .whitespaces).isEmpty {
-                        let cmd = textoManual
-                        textoManual = ""
-                        enviarComando(cmd)
-                    }
-                }
-
-            // Dismiss keyboard button (when focused and empty)
-            if textoFocused && textoManual.trimmingCharacters(in: .whitespaces).isEmpty {
-                Button {
-                    textoFocused = false
-                } label: {
-                    Image(systemName: "keyboard.chevron.compact.down")
-                        .font(.system(size: 16))
-                        .foregroundStyle(.secondary)
-                }
-                .buttonStyle(.plain)
-            }
-
-            // Send button
-            if !textoManual.trimmingCharacters(in: .whitespaces).isEmpty {
-                Button {
-                    let cmd = textoManual
-                    textoManual = ""
-                    enviarComando(cmd)
-                } label: {
-                    Image(systemName: "arrow.up.circle.fill")
-                        .font(.title2)
-                        .foregroundStyle(.blue)
-                }
-            }
-
-            // Scanner button
-            Button {
-                mostrarScanner = true
-            } label: {
-                Image(systemName: "camera.viewfinder")
-                    .font(.system(size: 16))
-                    .foregroundStyle(.secondary)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Escanear documento")
-
-            // Mic button
-            Button {
-                if speech.estaEscuchando {
-                    speech.detenerEscucha()
-                } else if speech.permisoConecido {
-                    speech.iniciarEscucha()
-                } else {
-                    speech.solicitarPermisosYEscuchar()
-                }
-            } label: {
-                Image(systemName: speech.estaEscuchando ? "stop.fill" : "mic.fill")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(speech.estaEscuchando ? .red : .blue)
-                    .frame(width: 36, height: 36)
-                    .background(speech.estaEscuchando ? Color.red.opacity(0.15) : Color.blue.opacity(0.1))
-                    .clipShape(Circle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(speech.estaEscuchando ? "Detener grabación" : "Activar micrófono")
-            .accessibilityHint("Pulsa para hablar un comando")
-            .disabled(procesando)
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 8)
-        .background(Color(.secondarySystemBackground).opacity(0.95))
-        .clipShape(RoundedRectangle(cornerRadius: 24))
-        .overlay(
-            RoundedRectangle(cornerRadius: 24)
-                .stroke(Color.primary.opacity(0.08), lineWidth: 0.5)
-        )
-        .shadow(color: .black.opacity(0.08), radius: 12, y: 4)
-        .padding(.horizontal, 12)
-        .padding(.bottom, 8)
-    }
-
-    // MARK: - Helpers de estilo
-
-    private func iconoAccion(_ accion: ComandoResultado.AccionRealizada) -> String {
-        switch accion {
-        case .clienteCreado: return "person.badge.plus"
-        case .clienteEncontrado: return "person.crop.circle"
-        case .articuloCreado: return "shippingbox.fill"
-        case .articuloEncontrado: return "shippingbox"
-        case .facturaBorradorCreada: return "doc.badge.plus"
-        case .facturaEmitida: return "paperplane.fill"
-        case .facturaMarcadaPagada: return "checkmark.circle.fill"
-        case .listaClientes: return "person.2"
-        case .listaArticulos: return "shippingbox"
-        case .listaFacturas: return "doc.text"
-        case .importarSolicitado: return "arrow.down.doc"
-        case .informacion: return "info.circle"
-        case .error: return "exclamationmark.triangle"
-        }
-    }
-
-    private func colorAccion(_ accion: ComandoResultado.AccionRealizada) -> Color {
-        switch accion {
-        case .clienteCreado, .articuloCreado: return .blue
-        case .facturaBorradorCreada: return .purple
-        case .facturaMarcadaPagada: return .green
-        case .error: return .red
-        default: return .secondary
-        }
-    }
-
-    private func tituloAccion(_ accion: ComandoResultado.AccionRealizada) -> String {
-        switch accion {
-        case .clienteCreado: return "Cliente creado"
-        case .clienteEncontrado: return "Cliente encontrado"
-        case .articuloCreado: return "Artículo añadido"
-        case .articuloEncontrado: return "Artículo encontrado"
-        case .facturaBorradorCreada: return "Factura creada"
-        case .facturaEmitida: return "Factura emitida"
-        case .facturaMarcadaPagada: return "Factura cobrada"
-        case .listaClientes: return "Clientes"
-        case .listaArticulos: return "Artículos"
-        case .listaFacturas: return "Facturas"
-        case .importarSolicitado: return "Importar datos"
-        case .informacion: return "Información"
-        case .error: return "Error"
-        }
     }
 }
 

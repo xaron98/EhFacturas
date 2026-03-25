@@ -7,7 +7,7 @@ import Foundation
 @MainActor
 final class APIKeyManager: ObservableObject {
 
-    static let shared = APIKeyManager()
+    static var shared = APIKeyManager()
 
     @Published var isAuthenticated = false
     @Published var error: String?
