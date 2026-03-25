@@ -58,6 +58,7 @@ final class CommandAIService: ObservableObject {
 
     private let modelContext: ModelContext
     private var provider: any AIProvider
+    private var contextoSesion: [String] = []
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
@@ -83,11 +84,32 @@ final class CommandAIService: ObservableObject {
         estado = .procesando("Pensando...")
 
         do {
-            let result = try await provider.processCommand(textoLimpio, systemPrompt: systemPrompt)
+            // Build prompt with recent session context
+            var promptConContexto = systemPrompt
+            if !contextoSesion.isEmpty {
+                let contexto = contextoSesion.suffix(5).joined(separator: "\n")
+                promptConContexto += "\n\nContexto reciente de la sesión:\n\(contexto)"
+            }
+
+            let result = try await provider.processCommand(textoLimpio, systemPrompt: promptConContexto)
             let respuestaTexto = result.text
 
             // Determinar qué tipo de acción se realizó
             let accion = determinarAccion(respuesta: respuestaTexto, comando: textoLimpio)
+
+            // Update session context for future reference
+            if accion == .clienteCreado {
+                contextoSesion.append("Cliente creado: \(respuestaTexto)")
+            }
+            if accion == .facturaBorradorCreada {
+                contextoSesion.append("Factura creada: \(respuestaTexto)")
+            }
+            if accion == .articuloCreado {
+                contextoSesion.append("Artículo creado: \(respuestaTexto)")
+            }
+            if contextoSesion.count > 10 {
+                contextoSesion = Array(contextoSesion.suffix(10))
+            }
 
             // Si se creó una factura, buscar la más reciente
             var facturaID: PersistentIdentifier?
@@ -175,6 +197,9 @@ final class CommandAIService: ObservableObject {
         - "¿cuánto he facturado este trimestre?" o "informe" → usa consultar_resumen con tipo "general".
         - "exporta las facturas" → dile al usuario que vaya a la bandeja → Informes → Exportar.
         - Las facturas emitidas NO se pueden modificar → "Rectificar" en la vista de factura.
+        - "deshaz lo último" o "deshacer" → usa deshacer.
+        - "no, quería decir X" → si se refiere a la última acción, primero deshaz y luego ejecuta la corrección.
+        - Si el usuario pide varias cosas en un solo mensaje ("crea un cliente y hazle una factura"), ejecuta cada acción en orden usando las herramientas correspondientes.
         - Después de ejecutar, confirma en UNA frase corta. No preguntes si quiere algo más.
         """
     }
@@ -218,6 +243,9 @@ final class CommandAIService: ObservableObject {
         }
         if r.contains("encontrado") && (c.contains("artículo") || c.contains("producto")) {
             return .articuloEncontrado
+        }
+        if r.contains("deshecho") || r.contains("deshecha") || r.contains("deshacer") {
+            return .informacion
         }
         if r.contains("resumen") || r.contains("pendiente") || r.contains("factura(s)") {
             return .listaFacturas

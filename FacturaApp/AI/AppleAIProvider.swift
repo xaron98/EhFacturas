@@ -66,7 +66,7 @@ final class AppleAIProvider: AIProvider {
                 ]
             ) { systemPrompt }
         } else {
-            // Command mode — 10 tools
+            // Command mode — 11 tools
             session = LanguageModelSession(
                 tools: [
                     AppleConfigurarNegocioTool(modelContext: modelContext),
@@ -78,7 +78,8 @@ final class AppleAIProvider: AIProvider {
                     AppleMarcarPagadaTool(modelContext: modelContext),
                     AppleAnularFacturaTool(modelContext: modelContext),
                     AppleImportarDatosTool(modelContext: modelContext),
-                    AppleConsultarResumenTool(modelContext: modelContext)
+                    AppleConsultarResumenTool(modelContext: modelContext),
+                    AppleDeshacerTool(modelContext: modelContext)
                 ]
             ) { systemPrompt }
         }
@@ -431,6 +432,29 @@ struct AppleConsultarResumenTool: Tool, @unchecked Sendable {
             ConsultarResumenParams(tipo: arguments.tipo),
             modelContext: modelContext
         ) }
+    }
+}
+
+// MARK: AppleDeshacerTool
+
+@available(iOS 26, *)
+struct AppleDeshacerTool: Tool, @unchecked Sendable {
+    let name = "deshacer"
+    let description = """
+        Deshace la última acción (crear cliente, artículo o factura). \
+        Usa cuando el usuario diga 'deshaz', 'deshacer', 'anula lo último' o 'no quería eso'.
+        """
+
+    @Generable
+    struct Arguments {
+        @Guide(description: "Motivo del deshacer. Vacío si no se da.")
+        var motivo: String
+    }
+
+    let modelContext: ModelContext
+
+    func call(arguments: Arguments) async throws -> String {
+        await MainActor.run { FacturaActions.deshacerUltimaAccion(modelContext: modelContext) }
     }
 }
 

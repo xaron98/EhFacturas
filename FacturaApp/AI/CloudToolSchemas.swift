@@ -206,6 +206,20 @@ enum CloudToolSchemas {
                 ] as [String: Any],
                 "required": ["tipo"]
             ] as [String: Any]
+        ],
+        [
+            "name": "deshacer",
+            "description": """
+                Deshace la última acción (crear cliente, artículo o factura). \
+                Usa cuando el usuario diga 'deshaz', 'deshacer', 'anula lo último' o 'no quería eso'.
+                """,
+            "input_schema": [
+                "type": "object",
+                "properties": [
+                    "motivo": ["type": "string", "description": "Motivo del deshacer. Vacío si no se da."]
+                ] as [String: Any],
+                "required": [] as [String]
+            ] as [String: Any]
         ]
     ]
 
@@ -484,6 +498,23 @@ enum CloudToolSchemas {
                     "required": ["tipo"]
                 ] as [String: Any]
             ] as [String: Any]
+        ],
+        [
+            "type": "function",
+            "function": [
+                "name": "deshacer",
+                "description": """
+                    Deshace la última acción (crear cliente, artículo o factura). \
+                    Usa cuando el usuario diga 'deshaz', 'deshacer', 'anula lo último' o 'no quería eso'.
+                    """,
+                "parameters": [
+                    "type": "object",
+                    "properties": [
+                        "motivo": ["type": "string", "description": "Motivo del deshacer. Vacío si no se da."]
+                    ] as [String: Any],
+                    "required": [] as [String]
+                ] as [String: Any]
+            ] as [String: Any]
         ]
     ]
 
@@ -685,6 +716,9 @@ extension CloudToolSchemas {
                 ),
                 modelContext: modelContext
             )
+
+        case "deshacer":
+            return FacturaActions.deshacerUltimaAccion(modelContext: modelContext)
 
         // MARK: Edit tools (4)
 

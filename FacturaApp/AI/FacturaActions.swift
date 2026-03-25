@@ -98,10 +98,22 @@ struct CrearRecurrenteParams {
     var importe: Double
 }
 
+// MARK: - Undo tracking
+
+struct UltimaAccion {
+    var tipo: String  // "crear_cliente", "crear_factura", etc.
+    var descripcion: String
+    var facturaID: PersistentIdentifier?
+    var clienteID: PersistentIdentifier?
+    var articuloID: PersistentIdentifier?
+}
+
 // MARK: - FacturaActions
 
 @MainActor
 enum FacturaActions {
+
+    static var ultimaAccion: UltimaAccion?
 
     // MARK: - configurarNegocio
 
@@ -160,6 +172,7 @@ enum FacturaActions {
         )
         modelContext.insert(cliente)
         try? modelContext.save()
+        ultimaAccion = UltimaAccion(tipo: "crear_cliente", descripcion: "Cliente \(params.nombre)", clienteID: cliente.persistentModelID)
         return "Cliente '\(params.nombre)' creado correctamente."
     }
 
@@ -209,6 +222,7 @@ enum FacturaActions {
 
         modelContext.insert(articulo)
         try? modelContext.save()
+        ultimaAccion = UltimaAccion(tipo: "crear_articulo", descripcion: "Artículo \(params.nombre)", articuloID: articulo.persistentModelID)
         return "Artículo '\(params.nombre)' creado a \(String(format: "%.2f", params.precioUnitario))€/\(unidad.rawValue)."
     }
 
@@ -330,6 +344,7 @@ enum FacturaActions {
 
         modelContext.insert(factura)
         try? modelContext.save()
+        ultimaAccion = UltimaAccion(tipo: "crear_factura", descripcion: "\(params.esPresupuesto ? "Presupuesto" : "Factura") \(factura.numeroFactura)", facturaID: factura.persistentModelID)
 
         let tipoDoc = params.esPresupuesto ? "Presupuesto" : "Factura"
         let estadoDoc = params.esPresupuesto ? "presupuesto" : "borrador"
@@ -461,6 +476,50 @@ enum FacturaActions {
         try? modelContext.save()
 
         return "Factura recurrente creada: \(rec.nombre) por \(Formateadores.formatEuros(params.importe)) (\(params.frecuencia))."
+    }
+
+    // MARK: - deshacerUltimaAccion
+
+    static func deshacerUltimaAccion(modelContext: ModelContext) -> String {
+        guard let accion = ultimaAccion else {
+            return "No hay ninguna acción que deshacer."
+        }
+
+        switch accion.tipo {
+        case "crear_cliente":
+            if let id = accion.clienteID,
+               let cliente = modelContext.model(for: id) as? Cliente {
+                cliente.activo = false
+                try? modelContext.save()
+                ultimaAccion = nil
+                return "Deshecho: \(accion.descripcion) desactivado."
+            }
+        case "crear_articulo":
+            if let id = accion.articuloID,
+               let articulo = modelContext.model(for: id) as? Articulo {
+                articulo.activo = false
+                try? modelContext.save()
+                ultimaAccion = nil
+                return "Deshecho: \(accion.descripcion) desactivado."
+            }
+        case "crear_factura":
+            if let id = accion.facturaID,
+               let factura = modelContext.model(for: id) as? Factura {
+                if factura.estado == .borrador || factura.estado == .presupuesto {
+                    factura.estado = .anulada
+                    try? modelContext.save()
+                    ultimaAccion = nil
+                    return "Deshecho: \(accion.descripcion) anulada."
+                } else {
+                    return "No se puede deshacer: la factura ya fue emitida."
+                }
+            }
+        default:
+            break
+        }
+
+        ultimaAccion = nil
+        return "No se pudo deshacer la última acción."
     }
 
     // MARK: - modificarLinea (edit tool)
