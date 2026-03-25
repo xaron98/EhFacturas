@@ -662,7 +662,13 @@ enum DataConfig {
             } catch {
                 print("ERROR: Local config failed, using memory: \(error.localizedDescription)")
                 let memoryConfig = ModelConfiguration(isStoredInMemoryOnly: true)
-                return try! ModelContainer(for: schema, configurations: memoryConfig)
+                do {
+                    return try ModelContainer(for: schema, configurations: memoryConfig)
+                } catch {
+                    // Absolute last resort — create with minimal schema
+                    print("FATAL: Cannot create any ModelContainer: \(error)")
+                    return try! ModelContainer(for: Schema([]), configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+                }
             }
         }
     }()

@@ -247,6 +247,7 @@ struct AjustesView: View {
                 }
 
                 // Dev mode: direct API key
+                #if DEBUG
                 if !SubscriptionManager.shared.isProSubscriber {
                     Button {
                         mostrarAPIKeyInput = true
@@ -255,6 +256,7 @@ struct AjustesView: View {
                     }
                     .font(.subheadline)
                 }
+                #endif
 
                 // Subscription status
                 HStack {
@@ -422,7 +424,7 @@ struct AjustesView: View {
             EventLogView()
         }
         .alert("API Key (desarrollo)", isPresented: $mostrarAPIKeyInput) {
-            TextField("sk-...", text: $apiKeyTexto)
+            SecureField("sk-...", text: $apiKeyTexto)
             Button("Guardar") {
                 if !apiKeyTexto.isEmpty {
                     APIKeyManager.shared.setDirectAPIKey(apiKeyTexto)

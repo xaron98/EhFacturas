@@ -99,7 +99,7 @@ final class SubscriptionManager {
     // MARK: - Listen for transactions
 
     private func listenForTransactions() -> Task<Void, Never> {
-        Task.detached {
+        Task {
             for await result in Transaction.updates {
                 if case .verified(let transaction) = result {
                     await self.updateSubscriptionStatus()
@@ -121,9 +121,20 @@ final class SubscriptionManager {
     }
 
     private func getReceiptData() async -> Data? {
-        // StoreKit 2 doesn't have a traditional receipt file.
-        // For backend validation, we'd use the transaction JWS.
-        // For now, return nil — backend auth will be implemented with the proxy.
+        for await result in Transaction.currentEntitlements {
+            if case .verified(let transaction) = result {
+                if transaction.productID == Self.proMonthlyID ||
+                   transaction.productID == Self.proYearlyID {
+                    // Encode transaction details as JSON
+                    let info: [String: String] = [
+                        "productID": transaction.productID,
+                        "transactionID": String(transaction.id),
+                        "originalTransactionID": String(transaction.originalID)
+                    ]
+                    return try? JSONSerialization.data(withJSONObject: info)
+                }
+            }
+        }
         return nil
     }
 

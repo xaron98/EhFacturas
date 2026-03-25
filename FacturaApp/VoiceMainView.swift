@@ -45,6 +45,7 @@ struct VoiceMainView: View {
     @State private var tipoImportacion: TipoImportacion?
     @State private var mostrarImportador = false
     @State private var currentTask: Task<Void, Never>?
+    @State private var currentCommandID = UUID()
     @State private var mostrarScanner = false
     @State private var animateGradient = false
     @FocusState private var textoFocused: Bool
@@ -235,9 +236,15 @@ struct VoiceMainView: View {
 
         procesando = true
 
+        let commandID = UUID()
+        currentCommandID = commandID
+
         currentTask?.cancel()
         currentTask = Task {
             await aiService.procesarComando(textoLimpio)
+
+            // Guard against stale response (command was superseded)
+            guard !Task.isCancelled, currentCommandID == commandID else { return }
 
             procesando = false
 
@@ -677,6 +684,7 @@ struct BandejaManualView: View {
                                 .background(Color(.systemGray5))
                                 .clipShape(Circle())
                         }
+                        .accessibilityLabel("Nuevo \(seccionSeleccionada.rawValue)")
                     }
 
                     Button {
