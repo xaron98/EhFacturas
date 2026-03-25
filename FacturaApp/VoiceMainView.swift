@@ -733,27 +733,37 @@ struct BandejaManualView: View {
 struct FacturaApp: App {
 
     let container = DataConfig.container
-    @Query private var negocios: [Negocio]
 
     init() {
         FacturaVencimientoService.registrarTareaBackground()
     }
 
+    var body: some Scene {
+        WindowGroup {
+            ThemeWrapper {
+                VoiceMainView(modelContext: container.mainContext)
+                    .modifier(RevisionVencimientosModifier())
+            }
+            .modelContainer(container)
+        }
+    }
+}
+
+/// Wrapper that reactively applies the theme from Negocio settings
+struct ThemeWrapper<Content: View>: View {
+    @Query private var negocios: [Negocio]
+    @ViewBuilder let content: () -> Content
+
     private var colorScheme: ColorScheme? {
-        let tema = (try? container.mainContext.fetch(FetchDescriptor<Negocio>()))?.first?.temaApp ?? "auto"
-        switch tema {
+        switch negocios.first?.temaApp ?? "auto" {
         case "light": return .light
         case "dark": return .dark
         default: return nil
         }
     }
 
-    var body: some Scene {
-        WindowGroup {
-            VoiceMainView(modelContext: container.mainContext)
-                .modelContainer(container)
-                .modifier(RevisionVencimientosModifier())
-                .preferredColorScheme(colorScheme)
-        }
+    var body: some View {
+        content()
+            .preferredColorScheme(colorScheme)
     }
 }

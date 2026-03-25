@@ -8,11 +8,15 @@ import AVFoundation
 final class VozIAService: ObservableObject {
     static let shared = VozIAService()
 
-    @Published var vozActiva = false
-    @Published var vozSeleccionada: TipoVoz = .femenina
+    @Published var vozActiva: Bool {
+        didSet { UserDefaults.standard.set(vozActiva, forKey: "vozIA_activa") }
+    }
+    @Published var vozSeleccionada: TipoVoz {
+        didSet { UserDefaults.standard.set(vozSeleccionada.rawValue, forKey: "vozIA_tipo") }
+    }
     @Published var hablando = false
 
-    private let synthesizer = AVSpeechSynthesizer()
+    nonisolated(unsafe) private let synthesizer = AVSpeechSynthesizer()
     private var delegate: SpeechDelegate?
 
     enum TipoVoz: String, CaseIterable {
@@ -22,6 +26,11 @@ final class VozIAService: ObservableObject {
     }
 
     private init() {
+        // Load persisted settings
+        self.vozActiva = UserDefaults.standard.bool(forKey: "vozIA_activa")
+        let tipoGuardado = UserDefaults.standard.string(forKey: "vozIA_tipo") ?? "Femenina"
+        self.vozSeleccionada = TipoVoz(rawValue: tipoGuardado) ?? .femenina
+
         delegate = SpeechDelegate { [weak self] in
             Task { @MainActor in
                 self?.hablando = false
@@ -33,14 +42,24 @@ final class VozIAService: ObservableObject {
     func hablar(_ texto: String) {
         guard vozActiva, vozSeleccionada != .desactivada else { return }
 
-        // Limpiar texto de emojis y símbolos
+        // Limpiar texto
         let textoLimpio = texto
             .replacingOccurrences(of: "⚠️", with: "")
             .replacingOccurrences(of: "ℹ️", with: "")
             .replacingOccurrences(of: "•", with: "")
+            .replacingOccurrences(of: "##", with: "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard !textoLimpio.isEmpty else { return }
+
+        // Configurar sesión de audio
+        do {
+            let audioSession = AVAudioSession.sharedInstance()
+            try audioSession.setCategory(.playback, mode: .default, options: [.duckOthers])
+            try audioSession.setActive(true)
+        } catch {
+            print("Error configurando audio para TTS: \(error)")
+        }
 
         // Detener habla anterior
         if synthesizer.isSpeaking {
@@ -48,23 +67,24 @@ final class VozIAService: ObservableObject {
         }
 
         let utterance = AVSpeechUtterance(string: textoLimpio)
-        utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 1.1
-        utterance.pitchMultiplier = vozSeleccionada == .femenina ? 1.2 : 0.9
-        utterance.volume = 0.9
+        utterance.rate = AVSpeechUtteranceDefaultSpeechRate
+        utterance.volume = 1.0
 
         // Buscar voz en español
         let voces = AVSpeechSynthesisVoice.speechVoices().filter { $0.language.hasPrefix("es") }
 
         if vozSeleccionada == .femenina {
-            // Preferir voces femeninas (Monica, Paulina, etc.)
-            if let voz = voces.first(where: { $0.name.contains("Monica") || $0.name.contains("Paulina") || $0.name.contains("Helena") }) {
+            utterance.pitchMultiplier = 1.1
+            if let voz = voces.first(where: { $0.name.contains("Mónica") || $0.name.contains("Monica") || $0.name.contains("Paulina") || $0.name.contains("Helena") || $0.name.contains("Marisol") }) {
+                utterance.voice = voz
+            } else if let voz = voces.first(where: { $0.quality == .enhanced }) {
                 utterance.voice = voz
             } else if let voz = voces.first {
                 utterance.voice = voz
             }
         } else {
-            // Preferir voces masculinas (Jorge, Diego, etc.)
-            if let voz = voces.first(where: { $0.name.contains("Jorge") || $0.name.contains("Diego") || $0.name.contains("Juan") }) {
+            utterance.pitchMultiplier = 0.95
+            if let voz = voces.first(where: { $0.name.contains("Jorge") || $0.name.contains("Diego") || $0.name.contains("Juan") || $0.name.contains("Andrés") }) {
                 utterance.voice = voz
             } else if let voz = voces.last {
                 utterance.voice = voz
