@@ -180,6 +180,21 @@ struct AjustesView: View {
                 Text("Crea las categorías predefinidas si no existen.")
             }
 
+            // Apariencia
+            Section {
+                Picker("Tema", selection: Binding(
+                    get: { negocio.temaApp },
+                    set: { negocio.temaApp = $0; try? modelContext.save() }
+                )) {
+                    Label("Automático", systemImage: "circle.lefthalf.filled").tag("auto")
+                    Label("Claro", systemImage: "sun.max").tag("light")
+                    Label("Oscuro", systemImage: "moon").tag("dark")
+                }
+                .pickerStyle(.inline)
+            } header: {
+                Text("Apariencia")
+            }
+
             // Inteligencia Artificial
             Section {
                 // Active provider indicator

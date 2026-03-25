@@ -166,6 +166,7 @@ final class Negocio {
     var certificadoCaducidad: Date?
     var envioAutomatico: Bool = false
     var cloudProvider: String = "claude"
+    var temaApp: String = "auto"  // "auto", "light", "dark"
 
     init(nombre: String = "", nif: String = "", direccion: String = "",
          codigoPostal: String = "", ciudad: String = "", provincia: String = "",

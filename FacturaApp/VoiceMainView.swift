@@ -632,9 +632,19 @@ struct BandejaManualView: View {
 struct FacturaApp: App {
 
     let container = DataConfig.container
+    @Query private var negocios: [Negocio]
 
     init() {
         FacturaVencimientoService.registrarTareaBackground()
+    }
+
+    private var colorScheme: ColorScheme? {
+        let tema = (try? container.mainContext.fetch(FetchDescriptor<Negocio>()))?.first?.temaApp ?? "auto"
+        switch tema {
+        case "light": return .light
+        case "dark": return .dark
+        default: return nil
+        }
     }
 
     var body: some Scene {
@@ -642,6 +652,7 @@ struct FacturaApp: App {
             VoiceMainView(modelContext: container.mainContext)
                 .modelContainer(container)
                 .modifier(RevisionVencimientosModifier())
+                .preferredColorScheme(colorScheme)
         }
     }
 }
