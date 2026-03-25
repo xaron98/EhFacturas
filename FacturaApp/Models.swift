@@ -206,6 +206,7 @@ final class Cliente {
     var observaciones: String = ""
     @Relationship(deleteRule: .nullify, inverse: \Factura.cliente)
     var facturas: [Factura]?
+    var facturasRecurrentes: [FacturaRecurrente]?
     var fechaCreacion: Date = Date.now
     var fechaModificacion: Date = Date.now
     var activo: Bool = true
@@ -559,6 +560,7 @@ final class FacturaRecurrente {
     var activo: Bool = true
     var vecesGenerada: Int = 0
     var fechaCreacion: Date = Date.now
+    @Relationship(inverse: \Cliente.facturasRecurrentes)
     var cliente: Cliente?
 
     init(nombre: String, cliente: Cliente?, articulosTexto: String, importeTotal: Double, frecuencia: String) {

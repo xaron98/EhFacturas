@@ -1,7 +1,8 @@
 // FacturaAppWidget.swift
+// FacturaApp — Widget de facturación
+
 import WidgetKit
 import SwiftUI
-import SwiftData
 
 // MARK: - Timeline Provider
 
@@ -11,20 +12,16 @@ struct FacturaWidgetProvider: TimelineProvider {
     }
 
     func getSnapshot(in context: Context, completion: @escaping (FacturaWidgetEntry) -> Void) {
-        let entry = fetchData()
-        completion(entry)
+        completion(fetchData())
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<FacturaWidgetEntry>) -> Void) {
         let entry = fetchData()
         let nextUpdate = Calendar.current.date(byAdding: .hour, value: 1, to: .now) ?? .now
-        let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
-        completion(timeline)
+        completion(Timeline(entries: [entry], policy: .after(nextUpdate)))
     }
 
     private func fetchData() -> FacturaWidgetEntry {
-        // Widget can't easily access the app's ModelContainer
-        // Use App Group UserDefaults as a bridge
         let defaults = UserDefaults(suiteName: "group.es.facturaapp") ?? .standard
         return FacturaWidgetEntry(
             date: .now,
@@ -46,7 +43,7 @@ struct FacturaWidgetEntry: TimelineEntry {
     let numFacturas: Int
 }
 
-// MARK: - Widget Views
+// MARK: - Small View
 
 struct FacturaWidgetSmallView: View {
     let entry: FacturaWidgetEntry
@@ -60,9 +57,7 @@ struct FacturaWidgetSmallView: View {
                     .font(.caption2)
                     .fontWeight(.bold)
             }
-
             Spacer()
-
             VStack(alignment: .leading, spacing: 4) {
                 Text("Pendiente")
                     .font(.caption2)
@@ -72,7 +67,6 @@ struct FacturaWidgetSmallView: View {
                     .fontWeight(.bold)
                     .foregroundStyle(.orange)
             }
-
             if entry.vencido > 0 {
                 HStack(spacing: 4) {
                     Image(systemName: "exclamationmark.triangle.fill")
@@ -92,16 +86,17 @@ struct FacturaWidgetSmallView: View {
         f.numberStyle = .currency
         f.currencyCode = "EUR"
         f.locale = Locale(identifier: "es_ES")
-        return f.string(from: NSNumber(value: v)) ?? String(format: "%.2f \u{20AC}", v)
+        return f.string(from: NSNumber(value: v)) ?? String(format: "%.2f €", v)
     }
 }
+
+// MARK: - Medium View
 
 struct FacturaWidgetMediumView: View {
     let entry: FacturaWidgetEntry
 
     var body: some View {
         HStack(spacing: 16) {
-            // Left side
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Image(systemName: "doc.text.fill")
@@ -110,9 +105,7 @@ struct FacturaWidgetMediumView: View {
                         .font(.caption)
                         .fontWeight(.bold)
                 }
-
                 Spacer()
-
                 Text("\(entry.numFacturas)")
                     .font(.title)
                     .fontWeight(.bold)
@@ -120,10 +113,7 @@ struct FacturaWidgetMediumView: View {
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
-
             Divider()
-
-            // Right side - stats
             VStack(alignment: .leading, spacing: 6) {
                 statRow("Pendiente", entry.pendiente, .orange)
                 statRow("Cobrado", entry.cobrado, .green)
@@ -137,16 +127,10 @@ struct FacturaWidgetMediumView: View {
 
     private func statRow(_ label: String, _ value: Double, _ color: Color) -> some View {
         HStack {
-            Circle()
-                .fill(color)
-                .frame(width: 6, height: 6)
-            Text(label)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+            Circle().fill(color).frame(width: 6, height: 6)
+            Text(label).font(.caption2).foregroundStyle(.secondary)
             Spacer()
-            Text(formatEuros(value))
-                .font(.caption)
-                .fontWeight(.semibold)
+            Text(formatEuros(value)).font(.caption).fontWeight(.semibold)
         }
     }
 
@@ -155,7 +139,7 @@ struct FacturaWidgetMediumView: View {
         f.numberStyle = .currency
         f.currencyCode = "EUR"
         f.locale = Locale(identifier: "es_ES")
-        return f.string(from: NSNumber(value: v)) ?? String(format: "%.2f \u{20AC}", v)
+        return f.string(from: NSNumber(value: v)) ?? String(format: "%.2f €", v)
     }
 }
 
@@ -171,19 +155,18 @@ struct FacturaAppWidget: Widget {
                     .containerBackground(.fill.tertiary, for: .widget)
             } else {
                 FacturaWidgetSmallView(entry: entry)
+                    .padding()
+                    .background()
             }
         }
-        .configurationDisplayName("Facturacion")
+        .configurationDisplayName("Facturación")
         .description("Resumen de facturas pendientes y cobradas.")
         .supportedFamilies([.systemSmall, .systemMedium])
     }
 }
 
-// MARK: - Bundle
-
-@main
-struct FacturaAppWidgetBundle: WidgetBundle {
-    var body: some Widget {
-        FacturaAppWidget()
-    }
+#Preview(as: .systemSmall) {
+    FacturaAppWidget()
+} timeline: {
+    FacturaWidgetEntry(date: .now, pendiente: 1250, cobrado: 3400, vencido: 200, numFacturas: 12)
 }
