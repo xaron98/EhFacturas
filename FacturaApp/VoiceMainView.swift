@@ -364,6 +364,7 @@ struct VoiceMainView: View {
 struct BandejaManualView: View {
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) private var sizeClass
     @State private var seccionSeleccionada: SeccionBandeja = .facturas
     @State private var mostrarFormularioNuevo = false
 
@@ -378,81 +379,134 @@ struct BandejaManualView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // Custom toolbar — Liquid Glass style
-                HStack {
-                    Text("Gestión manual")
-                        .font(.headline)
-
-                    Spacer()
-
-                    if seccionSeleccionada == .clientes || seccionSeleccionada == .articulos || seccionSeleccionada == .gastos {
-                        Button {
-                            mostrarFormularioNuevo = true
-                        } label: {
-                            Image(systemName: "plus")
-                                .font(.callout)
-                                .fontWeight(.bold)
-                                .foregroundStyle(.primary)
-                                .frame(width: 34, height: 34)
-                                .background(Color(.systemGray5))
-                                .clipShape(Circle())
-                        }
-                        .accessibilityLabel("Nuevo \(seccionSeleccionada.rawValue)")
-                    }
-
-                    Button {
-                        dismiss()
-                    } label: {
-                        Text("Cerrar")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(.primary)
+            Group {
+                if sizeClass == .regular {
+                    // iPad layout: sidebar + content
+                    HStack(spacing: 0) {
+                        // Sidebar
+                        VStack(spacing: 0) {
+                            HStack {
+                                Text("FacturaApp")
+                                    .font(.headline)
+                                Spacer()
+                                Button {
+                                    dismiss()
+                                } label: {
+                                    Text("Cerrar")
+                                        .font(.subheadline)
+                                        .fontWeight(.semibold)
+                                        .foregroundStyle(.primary)
+                                        .padding(.horizontal, 16)
+                                        .padding(.vertical, 8)
+                                        .background(Color(.systemGray5))
+                                        .clipShape(Capsule())
+                                }
+                            }
                             .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .background(Color(.systemGray5))
-                            .clipShape(Capsule())
-                    }
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 10)
+                            .padding(.vertical, 10)
 
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(SeccionBandeja.allCases, id: \.self) { sec in
+                            List(SeccionBandeja.allCases, id: \.self, selection: Binding(
+                                get: { seccionSeleccionada },
+                                set: { if let v = $0 { seccionSeleccionada = v } }
+                            )) { sec in
+                                Label(sec.rawValue, systemImage: iconoSeccion(sec))
+                            }
+                            .listStyle(.sidebar)
+                        }
+                        .frame(width: 220)
+
+                        Divider()
+
+                        // Content
+                        VStack(spacing: 0) {
+                            if seccionSeleccionada == .clientes || seccionSeleccionada == .articulos || seccionSeleccionada == .gastos {
+                                HStack {
+                                    Spacer()
+                                    Button {
+                                        mostrarFormularioNuevo = true
+                                    } label: {
+                                        Image(systemName: "plus")
+                                            .font(.callout)
+                                            .fontWeight(.bold)
+                                            .foregroundStyle(.primary)
+                                            .frame(width: 34, height: 34)
+                                            .background(Color(.systemGray5))
+                                            .clipShape(Circle())
+                                    }
+                                    .accessibilityLabel("Nuevo \(seccionSeleccionada.rawValue)")
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 10)
+                            }
+
+                            contenidoSeccion
+                                .frame(maxWidth: .infinity)
+                        }
+                    }
+                } else {
+                    // iPhone layout: existing tabs
+                    VStack(spacing: 0) {
+                        // Custom toolbar — Liquid Glass style
+                        HStack {
+                            Text("Gestión manual")
+                                .font(.headline)
+
+                            Spacer()
+
+                            if seccionSeleccionada == .clientes || seccionSeleccionada == .articulos || seccionSeleccionada == .gastos {
+                                Button {
+                                    mostrarFormularioNuevo = true
+                                } label: {
+                                    Image(systemName: "plus")
+                                        .font(.callout)
+                                        .fontWeight(.bold)
+                                        .foregroundStyle(.primary)
+                                        .frame(width: 34, height: 34)
+                                        .background(Color(.systemGray5))
+                                        .clipShape(Circle())
+                                }
+                                .accessibilityLabel("Nuevo \(seccionSeleccionada.rawValue)")
+                            }
+
                             Button {
-                                seccionSeleccionada = sec
+                                dismiss()
                             } label: {
-                                Text(sec.rawValue)
+                                Text("Cerrar")
                                     .font(.subheadline)
-                                    .fontWeight(seccionSeleccionada == sec ? .semibold : .regular)
-                                    .padding(.horizontal, 14)
-                                    .padding(.vertical, 7)
-                                    .background(seccionSeleccionada == sec ? Color.blue : Color(.systemGray5))
-                                    .foregroundStyle(seccionSeleccionada == sec ? .white : .primary)
+                                    .fontWeight(.semibold)
+                                    .foregroundStyle(.primary)
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 8)
+                                    .background(Color(.systemGray5))
                                     .clipShape(Capsule())
                             }
-                            .buttonStyle(.plain)
                         }
-                    }
-                    .padding(.horizontal)
-                    .padding(.top, 8)
-                }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
 
-                Group {
-                    switch seccionSeleccionada {
-                    case .facturas:
-                        FacturasListView()
-                    case .clientes:
-                        ClientesListView()
-                    case .articulos:
-                        ArticulosListView()
-                    case .gastos:
-                        GastosView()
-                    case .informes:
-                        InformesView()
-                    case .ajustes:
-                        AjustesView()
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(SeccionBandeja.allCases, id: \.self) { sec in
+                                    Button {
+                                        seccionSeleccionada = sec
+                                    } label: {
+                                        Text(sec.rawValue)
+                                            .font(.subheadline)
+                                            .fontWeight(seccionSeleccionada == sec ? .semibold : .regular)
+                                            .padding(.horizontal, 14)
+                                            .padding(.vertical, 7)
+                                            .background(seccionSeleccionada == sec ? Color.blue : Color(.systemGray5))
+                                            .foregroundStyle(seccionSeleccionada == sec ? .white : .primary)
+                                            .clipShape(Capsule())
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                            .padding(.horizontal)
+                            .padding(.top, 8)
+                        }
+
+                        contenidoSeccion
                     }
                 }
             }
@@ -471,6 +525,39 @@ struct BandejaManualView: View {
                     }
                 }
             }
+        }
+    }
+
+    // MARK: - Content for selected section
+
+    @ViewBuilder
+    private var contenidoSeccion: some View {
+        switch seccionSeleccionada {
+        case .facturas:
+            FacturasListView()
+        case .clientes:
+            ClientesListView()
+        case .articulos:
+            ArticulosListView()
+        case .gastos:
+            GastosView()
+        case .informes:
+            InformesView()
+        case .ajustes:
+            AjustesView()
+        }
+    }
+
+    // MARK: - Section icons for iPad sidebar
+
+    private func iconoSeccion(_ sec: SeccionBandeja) -> String {
+        switch sec {
+        case .facturas: return "doc.text"
+        case .clientes: return "person.2"
+        case .articulos: return "shippingbox"
+        case .gastos: return "cart"
+        case .informes: return "chart.bar"
+        case .ajustes: return "gear"
         }
     }
 }

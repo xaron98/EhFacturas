@@ -12,6 +12,7 @@ struct InformesView: View {
     @State private var periodoSeleccionado: Periodo = .trimestre
     @State private var mostrarExport = false
     @State private var csvData: Data?
+    @State private var mesSeleccionado: String?
 
     enum Periodo: String, CaseIterable {
         case mes = "Este mes"
@@ -147,17 +148,29 @@ struct InformesView: View {
                                 x: .value("Mes", dato.mes),
                                 y: .value("Facturado", dato.facturado)
                             )
-                            .foregroundStyle(.blue.opacity(0.7))
+                            .foregroundStyle(mesSeleccionado == dato.mes ? .blue : .blue.opacity(0.5))
 
                             BarMark(
                                 x: .value("Mes", dato.mes),
                                 y: .value("Cobrado", dato.cobrado)
                             )
-                            .foregroundStyle(.green.opacity(0.7))
+                            .foregroundStyle(mesSeleccionado == dato.mes ? .green : .green.opacity(0.5))
                         }
                     }
                     .frame(height: 200)
                     .chartLegend(.visible)
+                    .chartOverlay { proxy in
+                        GeometryReader { geo in
+                            Rectangle()
+                                .fill(Color.clear)
+                                .contentShape(Rectangle())
+                                .onTapGesture { location in
+                                    if let mes: String = proxy.value(atX: location.x) {
+                                        withAnimation { mesSeleccionado = (mesSeleccionado == mes) ? nil : mes }
+                                    }
+                                }
+                        }
+                    }
                     .accessibilityLabel("Gráfico de facturación mensual")
 
                     HStack(spacing: 16) {
@@ -167,6 +180,37 @@ struct InformesView: View {
                         Label("Cobrado", systemImage: "circle.fill")
                             .font(.caption)
                             .foregroundStyle(.green)
+                    }
+                }
+
+                // Selected month invoices
+                if let mes = mesSeleccionado {
+                    Section("Facturas de \(mes)") {
+                        let meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+                        let mesIndex = meses.firstIndex(of: mes).map { $0 + 1 } ?? 0
+                        let facturasDelMes = facturasFiltradas.filter {
+                            Calendar.current.component(.month, from: $0.fecha) == mesIndex
+                            && ($0.estado == .emitida || $0.estado == .pagada)
+                        }
+                        if facturasDelMes.isEmpty {
+                            Text("Sin facturas en este mes")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        } else {
+                            ForEach(facturasDelMes, id: \.persistentModelID) { f in
+                                HStack {
+                                    Text(f.numeroFactura)
+                                        .font(.subheadline)
+                                    Text(f.clienteNombre)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                    Spacer()
+                                    Text(Formateadores.formatEuros(f.totalFactura))
+                                        .font(.subheadline)
+                                        .fontWeight(.semibold)
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -182,6 +226,25 @@ struct InformesView: View {
                             Text(Formateadores.formatEuros(cliente.total))
                                 .font(.subheadline)
                                 .fontWeight(.semibold)
+                        }
+                    }
+                }
+            }
+
+            // Expense category breakdown
+            if gastosDelPeriodo > 0 {
+                Section("Gastos por categoría") {
+                    let gastosFiltrados = todosGastos.filter { $0.fecha >= fechaInicio }
+                    let porCategoria = Dictionary(grouping: gastosFiltrados, by: \.categoria)
+                    ForEach(porCategoria.sorted(by: { $0.value.reduce(0) { $0 + $1.importe } > $1.value.reduce(0) { $0 + $1.importe } }), id: \.key) { cat, items in
+                        HStack {
+                            Text(cat.isEmpty ? "Sin categoría" : cat.capitalized)
+                                .font(.subheadline)
+                            Spacer()
+                            Text(Formateadores.formatEuros(items.reduce(0) { $0 + $1.importe }))
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(.red)
                         }
                     }
                 }
