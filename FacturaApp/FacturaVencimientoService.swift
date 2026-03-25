@@ -4,6 +4,7 @@
 import SwiftUI
 import SwiftData
 import UserNotifications
+import WidgetKit
 @preconcurrency import BackgroundTasks
 
 // MARK: - Servicio de vencimientos
@@ -47,6 +48,29 @@ final class FacturaVencimientoService {
         }
 
         try? modelContext.save()
+
+        // Update widget data
+        actualizarDatosWidget(modelContext: modelContext)
+    }
+
+    // MARK: - Widget data
+
+    func actualizarDatosWidget(modelContext: ModelContext) {
+        let desc = FetchDescriptor<Factura>()
+        guard let facturas = try? modelContext.fetch(desc) else { return }
+
+        let pendiente = facturas.filter { $0.estado == .emitida }.reduce(0) { $0 + $1.totalFactura }
+        let cobrado = facturas.filter { $0.estado == .pagada }.reduce(0) { $0 + $1.totalFactura }
+        let vencido = facturas.filter { $0.estado == .vencida }.reduce(0) { $0 + $1.totalFactura }
+        let numFacturas = facturas.filter { $0.estado != .anulada && $0.estado != .presupuesto }.count
+
+        let defaults = UserDefaults(suiteName: "group.es.facturaapp") ?? .standard
+        defaults.set(pendiente, forKey: "widget_pendiente")
+        defaults.set(cobrado, forKey: "widget_cobrado")
+        defaults.set(vencido, forKey: "widget_vencido")
+        defaults.set(numFacturas, forKey: "widget_numFacturas")
+
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     // MARK: - Notificaciones
