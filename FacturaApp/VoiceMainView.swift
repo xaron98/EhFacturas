@@ -270,6 +270,30 @@ struct VoiceMainView: View {
 
         procesando = true
 
+        // Check connectivity for cloud-only scenarios
+        if !OfflineQueueService.shared.isOnline {
+            // Check if Apple Intelligence is available (works offline)
+            var hasOnDeviceAI = false
+            #if canImport(FoundationModels)
+            if #available(iOS 26, *) {
+                hasOnDeviceAI = true // Will be checked by provider
+            }
+            #endif
+
+            if !hasOnDeviceAI {
+                OfflineQueueService.shared.enqueueCommand(textoLimpio)
+                procesando = false
+                withAnimation(.spring(response: 0.4)) {
+                    mensajes.append(MensajeChat(
+                        timestamp: .now,
+                        tipo: .sistema,
+                        texto: "Sin conexión. Comando guardado (\(OfflineQueueService.shared.pendingCommands.count) pendientes)."
+                    ))
+                }
+                return
+            }
+        }
+
         let commandID = UUID()
         currentCommandID = commandID
 
@@ -339,6 +363,23 @@ struct VoiceMainView: View {
                         .font(.caption)
                         .foregroundStyle(.orange)
                 }
+            }
+
+            if !OfflineQueueService.shared.isOnline {
+                HStack(spacing: 4) {
+                    Image(systemName: "wifi.slash")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                    Text("Sin conexión")
+                        .font(.caption2)
+                        .foregroundStyle(.orange)
+                }
+            }
+
+            if !OfflineQueueService.shared.pendingCommands.isEmpty {
+                Text("\(OfflineQueueService.shared.pendingCommands.count) pendientes")
+                    .font(.caption2)
+                    .foregroundStyle(.orange)
             }
 
             Spacer()
