@@ -18,6 +18,8 @@ final class VozIAService: ObservableObject {
 
     nonisolated(unsafe) private let synthesizer = AVSpeechSynthesizer()
     private var delegate: SpeechDelegate?
+    private var cachedVoice: AVSpeechSynthesisVoice?
+    private var lastVoiceType: TipoVoz?
 
     enum TipoVoz: String, CaseIterable {
         case femenina = "Femenina"
@@ -52,52 +54,48 @@ final class VozIAService: ObservableObject {
 
         guard !textoLimpio.isEmpty else { return }
 
-        // Configurar sesión de audio
-        do {
-            let audioSession = AVAudioSession.sharedInstance()
-            try audioSession.setCategory(.playback, mode: .default, options: [.duckOthers])
-            try audioSession.setActive(true)
-        } catch {
-            print("Error configurando audio para TTS: \(error)")
-        }
-
         // Detener habla anterior
         if synthesizer.isSpeaking {
             synthesizer.stopSpeaking(at: .immediate)
         }
 
+        // Cache voice lookup (expensive filesystem scan)
+        if cachedVoice == nil || lastVoiceType != vozSeleccionada {
+            cachedVoice = resolverVoz()
+            lastVoiceType = vozSeleccionada
+        }
+
         let utterance = AVSpeechUtterance(string: textoLimpio)
         utterance.rate = AVSpeechUtteranceDefaultSpeechRate
         utterance.volume = 1.0
+        utterance.pitchMultiplier = vozSeleccionada == .femenina ? 1.1 : 0.95
+        utterance.voice = cachedVoice
 
-        // Buscar voz en español
-        let voces = AVSpeechSynthesisVoice.speechVoices().filter { $0.language.hasPrefix("es") }
-
-        if vozSeleccionada == .femenina {
-            utterance.pitchMultiplier = 1.1
-            if let voz = voces.first(where: { $0.name.contains("Mónica") || $0.name.contains("Monica") || $0.name.contains("Paulina") || $0.name.contains("Helena") || $0.name.contains("Marisol") }) {
-                utterance.voice = voz
-            } else if let voz = voces.first(where: { $0.quality == .enhanced }) {
-                utterance.voice = voz
-            } else if let voz = voces.first {
-                utterance.voice = voz
-            }
-        } else {
-            utterance.pitchMultiplier = 0.95
-            if let voz = voces.first(where: { $0.name.contains("Jorge") || $0.name.contains("Diego") || $0.name.contains("Juan") || $0.name.contains("Andrés") }) {
-                utterance.voice = voz
-            } else if let voz = voces.last {
-                utterance.voice = voz
-            }
-        }
-
-        // Fallback
-        if utterance.voice == nil {
-            utterance.voice = AVSpeechSynthesisVoice(language: "es-ES")
+        // Configure audio session and speak
+        do {
+            let audioSession = AVAudioSession.sharedInstance()
+            try audioSession.setCategory(.playback, mode: .default, options: [.duckOthers])
+            try audioSession.setActive(true)
+        } catch {
+            print("TTS audio session error: \(error)")
         }
 
         hablando = true
         synthesizer.speak(utterance)
+    }
+
+    private func resolverVoz() -> AVSpeechSynthesisVoice? {
+        let voces = AVSpeechSynthesisVoice.speechVoices().filter { $0.language.hasPrefix("es") }
+        if vozSeleccionada == .femenina {
+            return voces.first(where: { $0.name.contains("Mónica") || $0.name.contains("Monica") || $0.name.contains("Paulina") || $0.name.contains("Helena") })
+                ?? voces.first(where: { $0.quality == .enhanced })
+                ?? voces.first
+                ?? AVSpeechSynthesisVoice(language: "es-ES")
+        } else {
+            return voces.first(where: { $0.name.contains("Jorge") || $0.name.contains("Diego") || $0.name.contains("Juan") || $0.name.contains("Andrés") })
+                ?? voces.last
+                ?? AVSpeechSynthesisVoice(language: "es-ES")
+        }
     }
 
     func detener() {

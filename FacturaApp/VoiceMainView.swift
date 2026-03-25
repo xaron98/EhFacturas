@@ -56,30 +56,27 @@ struct VoiceMainView: View {
 
     var body: some View {
         ZStack {
-            // Animated gradient background
+            // Animated gradient background (RadialGradient — GPU efficient, no blur)
             Color(.systemBackground)
                 .ignoresSafeArea()
                 .overlay {
-                    // Animated gradient orbs
                     ZStack {
-                        Circle()
-                            .fill(Color.blue.opacity(0.15))
+                        RadialGradient(colors: [Color.blue.opacity(0.15), .clear],
+                                       center: .center, startRadius: 0, endRadius: 150)
                             .frame(width: 300, height: 300)
-                            .blur(radius: 80)
                             .offset(x: animateGradient ? 50 : -50, y: animateGradient ? -80 : 80)
 
-                        Circle()
-                            .fill(Color.purple.opacity(0.12))
+                        RadialGradient(colors: [Color.purple.opacity(0.12), .clear],
+                                       center: .center, startRadius: 0, endRadius: 125)
                             .frame(width: 250, height: 250)
-                            .blur(radius: 70)
                             .offset(x: animateGradient ? -60 : 60, y: animateGradient ? 60 : -60)
 
-                        Circle()
-                            .fill(Color.cyan.opacity(0.08))
+                        RadialGradient(colors: [Color.cyan.opacity(0.08), .clear],
+                                       center: .center, startRadius: 0, endRadius: 100)
                             .frame(width: 200, height: 200)
-                            .blur(radius: 60)
                             .offset(x: animateGradient ? 30 : -30, y: animateGradient ? 100 : -20)
                     }
+                    .drawingGroup()
                     .ignoresSafeArea()
                     .animation(.easeInOut(duration: 8).repeatForever(autoreverses: true), value: animateGradient)
                 }
@@ -565,7 +562,7 @@ struct VoiceMainView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
-        .background(.ultraThinMaterial)
+        .background(Color(.secondarySystemBackground).opacity(0.95))
         .clipShape(RoundedRectangle(cornerRadius: 24))
         .overlay(
             RoundedRectangle(cornerRadius: 24)

@@ -69,22 +69,26 @@ struct FacturaChatCard: View {
     let texto: String
     let onEdit: (Factura) -> Void
     @Environment(\.modelContext) private var modelContext
+    @State private var factura: Factura?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top, spacing: 10) {
                 Image(systemName: "sparkles")
                     .font(.title3)
-                    .foregroundStyle(.purple.opacity(0.6))
+                    .foregroundStyle(.purple)
                 Text(texto)
                     .font(.subheadline)
                     .foregroundStyle(.primary)
             }
-            if let factura = modelContext.model(for: facturaID) as? Factura {
+            if let factura {
                 FacturaCardView(factura: factura) {
                     onEdit(factura)
                 }
             }
+        }
+        .task {
+            factura = modelContext.model(for: facturaID) as? Factura
         }
     }
 }

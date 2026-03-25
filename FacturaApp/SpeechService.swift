@@ -24,6 +24,7 @@ final class SpeechService: ObservableObject {
     nonisolated(unsafe) private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     private var recognitionTask: SFSpeechRecognitionTask?
     nonisolated(unsafe) private let audioEngine = AVAudioEngine()
+    nonisolated(unsafe) private var lastLevelUpdate: Date = .distantPast
 
     // Timer de silencio: si pasan N segundos sin cambios, finaliza automáticamente
     private var silenceTimer: Timer?
@@ -171,7 +172,11 @@ final class SpeechService: ObservableObject {
 
         inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { @Sendable [weak self] buffer, _ in
             request.append(buffer)
-            let level = self?.calcularNivelAudio(buffer: buffer) ?? 0
+            // Throttle UI updates to ~10fps (every 100ms)
+            let now = Date()
+            guard let self, now.timeIntervalSince(self.lastLevelUpdate) > 0.1 else { return }
+            self.lastLevelUpdate = now
+            let level = self.calcularNivelAudio(buffer: buffer)
             Task { @MainActor [weak self] in
                 self?.nivelAudio = level
             }
