@@ -184,7 +184,7 @@ struct ArticuloRowView: View {
             // Icono de categoría
             ZStack {
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(.blue.opacity(0.08))
+                    .fill(.blue.opacity(0.12))
                     .frame(width: 36, height: 36)
                 Image(systemName: articulo.categoria?.icono ?? "shippingbox")
                     .font(.caption)
@@ -204,7 +204,7 @@ struct ArticuloRowView: View {
                     }
                     if let cat = articulo.categoria {
                         Text(cat.nombre)
-                            .foregroundStyle(.blue.opacity(0.8))
+                            .foregroundStyle(.blue)
                     }
                 }
                 .font(.caption)

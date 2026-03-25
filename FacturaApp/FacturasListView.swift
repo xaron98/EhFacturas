@@ -244,7 +244,7 @@ struct StatCard: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(.white.opacity(0.2), lineWidth: 0.5)
+                .stroke(Color.primary.opacity(0.1), lineWidth: 0.5)
         )
     }
 }

@@ -155,7 +155,7 @@ struct ClienteRowView: View {
                     .fontWeight(.medium)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
-                    .background(.blue.opacity(0.1))
+                    .background(.blue.opacity(0.15))
                     .clipShape(Capsule())
                     .foregroundStyle(.blue)
             }

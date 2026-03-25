@@ -54,7 +54,7 @@ struct FacturaCardView: View {
             .overlay(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
                     .stroke(
-                        LinearGradient(colors: [.white.opacity(0.4), .clear], startPoint: .topLeading, endPoint: .bottomTrailing),
+                        LinearGradient(colors: [Color.primary.opacity(0.15), Color.primary.opacity(0.02)], startPoint: .topLeading, endPoint: .bottomTrailing),
                         lineWidth: 0.5
                     )
             )

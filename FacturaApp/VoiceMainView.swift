@@ -312,7 +312,7 @@ struct VoiceMainView: View {
                     // Border
                     Circle()
                         .stroke(
-                            LinearGradient(colors: [.white.opacity(0.5), .white.opacity(0.1)], startPoint: .topLeading, endPoint: .bottomTrailing),
+                            LinearGradient(colors: [Color.primary.opacity(0.3), Color.primary.opacity(0.05)], startPoint: .topLeading, endPoint: .bottomTrailing),
                             lineWidth: 1
                         )
                         .frame(width: 80, height: 80)
@@ -321,7 +321,7 @@ struct VoiceMainView: View {
                     if speech.estaEscuchando {
                         Circle()
                             .stroke(lineWidth: 1.5)
-                            .foregroundStyle(.purple.opacity(0.3))
+                            .foregroundStyle(.purple.opacity(0.5))
                             .scaleEffect(1.0 + CGFloat(speech.nivelAudio) * 0.4)
                             .animation(.easeOut(duration: 0.1), value: speech.nivelAudio)
                             .frame(width: 80, height: 80)
@@ -342,7 +342,7 @@ struct VoiceMainView: View {
             VStack(spacing: 8) {
                 Text(hayNegocio ? "Prueba a decir:" : "Di algo como:")
                     .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(.secondary)
 
                 ForEach(ejemplos, id: \.self) { ejemplo in
                     Button {
@@ -403,10 +403,10 @@ struct VoiceMainView: View {
             HStack(alignment: .top, spacing: 10) {
                 Image(systemName: "sparkles")
                     .font(.title3)
-                    .foregroundStyle(.purple.opacity(0.6))
+                    .foregroundStyle(.purple)
                 HStack(spacing: 0) {
                     RoundedRectangle(cornerRadius: 1.5)
-                        .fill(.purple.opacity(0.4))
+                        .fill(.purple.opacity(0.6))
                         .frame(width: 3)
                         .padding(.vertical, 6)
                     VStack(alignment: .leading, spacing: 6) {
@@ -510,14 +510,14 @@ struct VoiceMainView: View {
                         .frame(width: 44, height: 44)
                     Circle()
                         .stroke(lineWidth: speech.estaEscuchando ? 2 : 1)
-                        .foregroundStyle(speech.estaEscuchando ? .red : .secondary.opacity(0.3))
+                        .foregroundStyle(speech.estaEscuchando ? .red : .secondary)
                         .frame(width: 44, height: 44)
 
                     // Anillo de audio
                     if speech.estaEscuchando {
                         Circle()
                             .stroke(lineWidth: 1)
-                            .foregroundStyle(.red.opacity(0.2))
+                            .foregroundStyle(.red.opacity(0.4))
                             .scaleEffect(1.0 + CGFloat(speech.nivelAudio) * 0.3)
                             .animation(.easeOut(duration: 0.1), value: speech.nivelAudio)
                             .frame(width: 44, height: 44)
