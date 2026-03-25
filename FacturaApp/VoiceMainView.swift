@@ -268,8 +268,9 @@ struct VoiceMainView: View {
                 mostrarBandeja = true
             } label: {
                 Image(systemName: "tray.full")
-                    .font(.title3)
-                    .foregroundStyle(.primary)
+                    .font(.title2)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.blue)
             }
             .accessibilityLabel("Gestión manual")
         }
