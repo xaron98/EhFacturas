@@ -284,9 +284,9 @@ struct StatCard: View {
                     .foregroundStyle(.secondary)
             }
             Text(Formateadores.formatEuros(valor))
-                .font(.subheadline)
+                .font(.title3)
                 .fontWeight(.bold)
-                .foregroundStyle(.primary)
+                .foregroundStyle(color)
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -310,7 +310,7 @@ struct FacturaRowView: View {
             // Icono estado
             ZStack {
                 Circle()
-                    .fill(colorEstado.opacity(0.12))
+                    .fill(colorEstado.opacity(0.2))
                     .frame(width: 36, height: 36)
                 Image(systemName: iconoEstado)
                     .font(.caption)
@@ -322,6 +322,7 @@ struct FacturaRowView: View {
                     Text(factura.numeroFactura)
                         .font(.subheadline)
                         .fontWeight(.medium)
+                        .foregroundStyle(.primary)
                     EstadoBadge(estado: factura.estado)
                 }
                 Text(factura.clienteNombre.isEmpty ? "Sin cliente" : factura.clienteNombre)
@@ -335,9 +336,10 @@ struct FacturaRowView: View {
                 Text(Formateadores.formatEuros(factura.totalFactura))
                     .font(.subheadline)
                     .fontWeight(.semibold)
+                    .foregroundStyle(.primary)
                 Text(factura.fecha, style: .date)
                     .font(.caption2)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(.secondary)
             }
         }
         .padding(.vertical, 2)
