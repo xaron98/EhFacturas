@@ -50,6 +50,7 @@ struct CrearFacturaParams {
     var articulosTexto: String
     var descuento: Double
     var observaciones: String
+    var esPresupuesto: Bool = false
 }
 
 struct MarcarPagadaParams {
@@ -255,7 +256,7 @@ enum FacturaActions {
         let factura = Factura(
             numeroFactura: numeroFactura,
             cliente: cliente,
-            estado: .borrador,
+            estado: params.esPresupuesto ? .presupuesto : .borrador,
             descuentoGlobalPorcentaje: params.descuento,
             observaciones: params.observaciones,
             promptOriginal: params.articulosTexto
@@ -323,7 +324,9 @@ enum FacturaActions {
         modelContext.insert(factura)
         try? modelContext.save()
 
-        var respuesta = "Factura \(factura.numeroFactura) creada como borrador"
+        let tipoDoc = params.esPresupuesto ? "Presupuesto" : "Factura"
+        let estadoDoc = params.esPresupuesto ? "presupuesto" : "borrador"
+        var respuesta = "\(tipoDoc) \(factura.numeroFactura) creada como \(estadoDoc)"
         respuesta += " para \(cliente?.nombre ?? params.nombreCliente).\n"
 
         if !lineasCreadas.isEmpty {
@@ -384,12 +387,13 @@ enum FacturaActions {
             return "No se encontró ninguna factura activa para '\(params.identificador)'."
         }
 
-        if factura.estado == .borrador {
-            // Borrador: anular directamente sin registro VeriFactu
+        if factura.estado == .borrador || factura.estado == .presupuesto {
+            // Borrador/Presupuesto: anular directamente sin registro VeriFactu
+            let tipoDoc = factura.estado == .presupuesto ? "Presupuesto" : "Factura borrador"
             factura.estado = .anulada
             factura.fechaModificacion = .now
             try? modelContext.save()
-            return "Factura borrador \(factura.numeroFactura) anulada."
+            return "\(tipoDoc) \(factura.numeroFactura) anulada."
         } else {
             // Emitida/pagada: crear registro de anulación VeriFactu
             let negocioDesc = FetchDescriptor<Negocio>()

@@ -289,9 +289,10 @@ struct AppleBuscarArticuloTool: Tool, @unchecked Sendable {
 struct AppleCrearFacturaTool: Tool, @unchecked Sendable {
     let name = "crear_factura"
     let description = """
-        Crea una nueva factura borrador con un cliente y artículos. \
-        Usa esta herramienta cuando el usuario quiera generar, hacer o crear una factura. \
-        Ejemplo: "Hazme una factura para Juan García con 5 bombillas LED y 2 horas de mano de obra"
+        Crea una nueva factura borrador o presupuesto con un cliente y artículos. \
+        Usa esta herramienta cuando el usuario quiera generar, hacer o crear una factura o presupuesto. \
+        Ejemplo: "Hazme una factura para Juan García con 5 bombillas LED y 2 horas de mano de obra" \
+        Si el usuario dice "presupuesto para..." usa esPresupuesto=true.
         """
 
     @Generable
@@ -304,6 +305,8 @@ struct AppleCrearFacturaTool: Tool, @unchecked Sendable {
         var descuento: Double
         @Guide(description: "Observaciones o notas. Vacío si no hay.")
         var observaciones: String
+        @Guide(description: "true si es un presupuesto, false si es una factura")
+        var esPresupuesto: Bool
     }
 
     let modelContext: ModelContext
@@ -314,7 +317,8 @@ struct AppleCrearFacturaTool: Tool, @unchecked Sendable {
                 nombreCliente: arguments.nombreCliente,
                 articulosTexto: arguments.articulosTexto,
                 descuento: arguments.descuento,
-                observaciones: arguments.observaciones
+                observaciones: arguments.observaciones,
+                esPresupuesto: arguments.esPresupuesto
             ),
             modelContext: modelContext
         ) }

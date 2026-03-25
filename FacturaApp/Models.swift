@@ -93,6 +93,7 @@ enum TipoIVA: String, Codable, CaseIterable, Identifiable {
 }
 
 enum EstadoFactura: String, Codable, CaseIterable, Identifiable {
+    case presupuesto
     case borrador
     case emitida
     case pagada
@@ -103,6 +104,7 @@ enum EstadoFactura: String, Codable, CaseIterable, Identifiable {
 
     var descripcion: String {
         switch self {
+        case .presupuesto: return "Presupuesto"
         case .borrador: return "Borrador"
         case .emitida: return "Emitida"
         case .pagada: return "Pagada"
@@ -113,6 +115,7 @@ enum EstadoFactura: String, Codable, CaseIterable, Identifiable {
 
     var color: String {
         switch self {
+        case .presupuesto: return "purple"
         case .borrador: return "gray"
         case .emitida: return "blue"
         case .pagada: return "green"

@@ -170,6 +170,9 @@ final class CommandAIService: ObservableObject {
         - "mi NIF es..." o "mi teléfono es..." → usa configurar_negocio para actualizar.
         - "anula la factura de Juan" o "borra la última factura" → usa anular_factura.
         - "importa artículos de Salfon" o "carga clientes desde CSV" → usa importar_datos con tipo "articulos" o "clientes".
+        - "presupuesto para Juan con..." → usa crear_factura con esPresupuesto=true.
+        - "¿cuánto he facturado este trimestre?" o "informe" → usa consultar_resumen con tipo "general".
+        - "exporta las facturas" → dile al usuario que vaya a la bandeja → Informes → Exportar.
         - Las facturas emitidas NO se pueden modificar → "Rectificar" en la vista de factura.
         - Después de ejecutar, confirma en UNA frase corta. No preguntes si quiere algo más.
         """
@@ -198,6 +201,9 @@ final class CommandAIService: ObservableObject {
             return .articuloCreado
         }
         if r.contains("factura") && (r.contains("creada") || r.contains("generada")) {
+            return .facturaBorradorCreada
+        }
+        if r.contains("presupuesto") && (r.contains("creado") || r.contains("creada") || r.contains("generado")) {
             return .facturaBorradorCreada
         }
         if r.contains("pagada") || r.contains("cobrada") {

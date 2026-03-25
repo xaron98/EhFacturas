@@ -129,9 +129,10 @@ enum CloudToolSchemas {
         [
             "name": "crear_factura",
             "description": """
-                Crea una nueva factura borrador con un cliente y artículos. \
-                Usa esta herramienta cuando el usuario quiera generar, hacer o crear una factura. \
-                Ejemplo: "Hazme una factura para Juan García con 5 bombillas LED y 2 horas de mano de obra"
+                Crea una nueva factura borrador o presupuesto con un cliente y artículos. \
+                Usa esta herramienta cuando el usuario quiera generar, hacer o crear una factura o presupuesto. \
+                Ejemplo: "Hazme una factura para Juan García con 5 bombillas LED y 2 horas de mano de obra". \
+                Si el usuario dice "presupuesto para..." usa esPresupuesto=true.
                 """,
             "input_schema": [
                 "type": "object",
@@ -139,7 +140,8 @@ enum CloudToolSchemas {
                     "nombreCliente": ["type": "string", "description": "Nombre del cliente"],
                     "articulosTexto": ["type": "string", "description": "Artículos con cantidad. Formato: 'cantidad nombre'. Ej: '5 bombillas LED, 2 horas mano de obra'"],
                     "descuento": ["type": "number", "description": "Descuento global en porcentaje. 0 si no hay descuento."],
-                    "observaciones": ["type": "string", "description": "Observaciones o notas. Vacío si no hay."]
+                    "observaciones": ["type": "string", "description": "Observaciones o notas. Vacío si no hay."],
+                    "esPresupuesto": ["type": "boolean", "description": "true si es presupuesto, false si es factura. Default false."]
                 ] as [String: Any],
                 "required": ["nombreCliente", "articulosTexto"]
             ] as [String: Any]
@@ -392,9 +394,10 @@ enum CloudToolSchemas {
             "function": [
                 "name": "crear_factura",
                 "description": """
-                    Crea una nueva factura borrador con un cliente y artículos. \
-                    Usa esta herramienta cuando el usuario quiera generar, hacer o crear una factura. \
-                    Ejemplo: "Hazme una factura para Juan García con 5 bombillas LED y 2 horas de mano de obra"
+                    Crea una nueva factura borrador o presupuesto con un cliente y artículos. \
+                    Usa esta herramienta cuando el usuario quiera generar, hacer o crear una factura o presupuesto. \
+                    Ejemplo: "Hazme una factura para Juan García con 5 bombillas LED y 2 horas de mano de obra". \
+                    Si el usuario dice "presupuesto para..." usa esPresupuesto=true.
                     """,
                 "parameters": [
                     "type": "object",
@@ -402,7 +405,8 @@ enum CloudToolSchemas {
                         "nombreCliente": ["type": "string", "description": "Nombre del cliente"],
                         "articulosTexto": ["type": "string", "description": "Artículos con cantidad. Formato: 'cantidad nombre'. Ej: '5 bombillas LED, 2 horas mano de obra'"],
                         "descuento": ["type": "number", "description": "Descuento global en porcentaje. 0 si no hay descuento."],
-                        "observaciones": ["type": "string", "description": "Observaciones o notas. Vacío si no hay."]
+                        "observaciones": ["type": "string", "description": "Observaciones o notas. Vacío si no hay."],
+                        "esPresupuesto": ["type": "boolean", "description": "true si es presupuesto, false si es factura. Default false."]
                     ] as [String: Any],
                     "required": ["nombreCliente", "articulosTexto"]
                 ] as [String: Any]
@@ -644,7 +648,8 @@ extension CloudToolSchemas {
                     nombreCliente: arguments["nombreCliente"] as? String ?? "",
                     articulosTexto: arguments["articulosTexto"] as? String ?? "",
                     descuento: arguments["descuento"] as? Double ?? 0,
-                    observaciones: arguments["observaciones"] as? String ?? ""
+                    observaciones: arguments["observaciones"] as? String ?? "",
+                    esPresupuesto: arguments["esPresupuesto"] as? Bool ?? false
                 ),
                 modelContext: modelContext
             )

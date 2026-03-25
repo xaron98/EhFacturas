@@ -598,6 +598,7 @@ struct BandejaManualView: View {
         case facturas = "Facturas"
         case clientes = "Clientes"
         case articulos = "Artículos"
+        case informes = "Informes"
         case ajustes = "Ajustes"
     }
 
@@ -621,6 +622,8 @@ struct BandejaManualView: View {
                         ClientesListView()
                     case .articulos:
                         ArticulosListView()
+                    case .informes:
+                        InformesView()
                     case .ajustes:
                         AjustesView()
                     }

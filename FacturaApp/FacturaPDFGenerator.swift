@@ -39,8 +39,9 @@ enum FacturaPDFGenerator {
             context.fill(barraRect)
             y = 30
 
-            // Cabecera: Logo + nombre + "FACTURA"
-            y = dibujarCabecera(context: context, negocio: negocio, y: y)
+            // Cabecera: Logo + nombre + "FACTURA" / "PRESUPUESTO"
+            let tituloDoc = factura.estado == .presupuesto ? "PRESUPUESTO" : "FACTURA"
+            y = dibujarCabecera(context: context, negocio: negocio, y: y, tituloDoc: tituloDoc)
 
             // Datos del emisor (izq) y cliente (der)
             y = dibujarDatosEmisorCliente(context: context, factura: factura, negocio: negocio, y: y)
@@ -71,7 +72,7 @@ enum FacturaPDFGenerator {
 
     // MARK: - Secciones del PDF
 
-    private static func dibujarCabecera(context: UIGraphicsPDFRendererContext, negocio: Negocio, y: CGFloat) -> CGFloat {
+    private static func dibujarCabecera(context: UIGraphicsPDFRendererContext, negocio: Negocio, y: CGFloat, tituloDoc: String = "FACTURA") -> CGFloat {
         var currentY = y
 
         // Logo si existe
@@ -91,12 +92,12 @@ enum FacturaPDFGenerator {
         let nombreStr = negocio.nombre as NSString
         nombreStr.draw(at: CGPoint(x: margin, y: currentY + 55), withAttributes: nombreAttr)
 
-        // "FACTURA" a la derecha
+        // "FACTURA" o "PRESUPUESTO" a la derecha
         let facturaAttr: [NSAttributedString.Key: Any] = [
             .font: UIFont.systemFont(ofSize: 28, weight: .bold),
             .foregroundColor: FacturaPDFConfig.primario
         ]
-        let facturaStr = "FACTURA" as NSString
+        let facturaStr = tituloDoc as NSString
         let facturaSize = facturaStr.size(withAttributes: facturaAttr)
         facturaStr.draw(at: CGPoint(x: pageWidth - margin - facturaSize.width, y: currentY + 10), withAttributes: facturaAttr)
 

@@ -414,6 +414,7 @@ struct EstadoBadge: View {
 
     private var color: Color {
         switch estado {
+        case .presupuesto: return .purple
         case .borrador: return .gray
         case .emitida: return .blue
         case .pagada: return .green

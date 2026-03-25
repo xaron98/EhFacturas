@@ -143,7 +143,7 @@ struct FacturasListView: View {
                                     } label: {
                                         Label("Anular", systemImage: "xmark.circle")
                                     }
-                                } else if factura.estado == .borrador {
+                                } else if factura.estado == .borrador || factura.estado == .presupuesto {
                                     Button(role: .destructive) {
                                         factura.estado = .anulada
                                         factura.fechaModificacion = .now
@@ -189,6 +189,7 @@ struct FacturasListView: View {
     private func colorEstado(_ estado: EstadoFactura?) -> Color {
         guard let estado else { return .blue }
         switch estado {
+        case .presupuesto: return .purple
         case .borrador: return .gray
         case .emitida: return .blue
         case .pagada: return .green
@@ -295,6 +296,7 @@ struct FacturaRowView: View {
 
     private var colorEstado: Color {
         switch factura.estado {
+        case .presupuesto: return .purple
         case .borrador: return .gray
         case .emitida: return .blue
         case .pagada: return .green
@@ -305,6 +307,7 @@ struct FacturaRowView: View {
 
     private var iconoEstado: String {
         switch factura.estado {
+        case .presupuesto: return "doc.text.magnifyingglass"
         case .borrador: return "doc"
         case .emitida: return "paperplane"
         case .pagada: return "checkmark.circle"
@@ -377,6 +380,13 @@ struct FacturaDetalleView: View {
                         if factura.estado == .emitida || factura.estado == .pagada {
                             accionBoton("Anular", icono: "xmark.circle", color: .red) {
                                 confirmarAnulacion = true
+                            }
+                        }
+                        if factura.estado == .presupuesto {
+                            accionBoton("Convertir", icono: "arrow.right.doc", color: .blue) {
+                                factura.estado = .borrador
+                                factura.fechaModificacion = .now
+                                try? modelContext.save()
                             }
                         }
                         if factura.estado == .emitida || factura.estado == .anulada {
@@ -526,7 +536,7 @@ struct FacturaDetalleView: View {
                 }
             }
         }
-        .navigationTitle("Factura")
+        .navigationTitle(factura.estado == .presupuesto ? "Presupuesto" : "Factura")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
