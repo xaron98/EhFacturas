@@ -31,7 +31,13 @@ final class SpeechService: ObservableObject {
     private let silenceTimeout: TimeInterval = 2.5
 
     init() {
-        recognizer = SFSpeechRecognizer(locale: Locale(identifier: "es-ES"))
+        // Lazy: recognizer created on first use, not blocking init
+    }
+
+    private func ensureRecognizer() {
+        if recognizer == nil {
+            recognizer = SFSpeechRecognizer(locale: Locale(identifier: "es-ES"))
+        }
     }
 
     // MARK: - Permisos
@@ -100,6 +106,7 @@ final class SpeechService: ObservableObject {
     /// Comienza a escuchar y transcribir.
     func iniciarEscucha() {
         guard !estaEscuchando else { return }
+        ensureRecognizer()
         guard let recognizer, recognizer.isAvailable else {
             errorMensaje = "El reconocimiento de voz no está disponible."
             return

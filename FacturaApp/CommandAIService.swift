@@ -58,18 +58,31 @@ final class CommandAIService: ObservableObject {
     }
 
     private let modelContext: ModelContext
-    private var provider: any AIProvider
+    private var _provider: (any AIProvider)?
     private var contextoSesion: [String] = []
+
+    private var provider: any AIProvider {
+        if _provider == nil {
+            _provider = AIProviderFactory.makeProvider(modelContext: modelContext, mode: .command)
+        }
+        return _provider!
+    }
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
-        self.provider = AIProviderFactory.makeProvider(modelContext: modelContext, mode: .command)
+        // Provider created lazily on first use, not blocking init
     }
 
     // MARK: - Verificar disponibilidad
 
     var iaDisponible: Bool {
-        provider.isAvailable
+        // Quick check without creating provider
+        #if canImport(FoundationModels)
+        if #available(iOS 26, *) {
+            return true // Assume available, will check on first command
+        }
+        #endif
+        return APIKeyManager.shared.isAuthenticated || APIKeyManager.shared.hasDirectKey || SubscriptionManager.shared.isProSubscriber
     }
 
     var razonNoDisponible: String {

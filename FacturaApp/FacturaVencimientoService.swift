@@ -169,7 +169,9 @@ struct RevisionVencimientosModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .onAppear {
+            .task {
+                // Defer vencimiento check to not block first render
+                try? await Task.sleep(for: .seconds(2))
                 FacturaVencimientoService.shared.revisarVencimientos(modelContext: modelContext)
             }
             .onChange(of: scenePhase) { _, newPhase in

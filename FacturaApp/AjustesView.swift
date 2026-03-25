@@ -240,7 +240,7 @@ struct AjustesView: View {
                 // Cloud provider picker
                 Picker("Proveedor cloud preferido", selection: Binding(
                     get: { negocio.cloudProvider },
-                    set: { negocio.cloudProvider = $0; try? modelContext.save() }
+                    set: { negocio.cloudProvider = $0; UserDefaults.standard.set($0, forKey: "cloudProvider"); try? modelContext.save() }
                 )) {
                     Text("Claude (Anthropic)").tag("claude")
                     Text("OpenAI (GPT-4o-mini)").tag("openai")

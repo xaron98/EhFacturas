@@ -12,17 +12,26 @@ enum AIProviderFactory {
         case edit(factura: Factura, onUpdate: @Sendable () -> Void)
     }
 
+    // Cache provider choice to avoid repeated checks
+    private static var cachedAppleAvailable: Bool?
+
     static func makeProvider(modelContext: ModelContext, mode: Mode) -> any AIProvider {
         // 1. Try Apple Intelligence (free, preferred)
         #if canImport(FoundationModels)
         if #available(iOS 26, *) {
-            switch mode {
-            case .command:
+            // Cache the availability check (expensive first time)
+            if cachedAppleAvailable == nil {
                 let apple = AppleAIProvider(modelContext: modelContext)
-                if apple.isAvailable { return apple }
-            case .edit(let factura, let onUpdate):
-                let apple = AppleAIProvider(modelContext: modelContext, factura: factura, onUpdate: onUpdate)
-                if apple.isAvailable { return apple }
+                cachedAppleAvailable = apple.isAvailable
+            }
+
+            if cachedAppleAvailable == true {
+                switch mode {
+                case .command:
+                    return AppleAIProvider(modelContext: modelContext)
+                case .edit(let factura, let onUpdate):
+                    return AppleAIProvider(modelContext: modelContext, factura: factura, onUpdate: onUpdate)
+                }
             }
         }
         #endif
@@ -33,8 +42,7 @@ enum AIProviderFactory {
         let hasDevKey = APIKeyManager.shared.hasDirectKey
 
         if isAuthed || isSubscribed || hasDevKey {
-            // Get preferred provider from Negocio
-            let preferredProvider = getPreferredProvider(modelContext: modelContext)
+            let preferredProvider = getPreferredProvider()
 
             switch mode {
             case .command:
@@ -54,8 +62,8 @@ enum AIProviderFactory {
         return UnavailableAIProvider()
     }
 
-    private static func getPreferredProvider(modelContext: ModelContext) -> String {
-        let desc = FetchDescriptor<Negocio>()
-        return (try? modelContext.fetch(desc))?.first?.cloudProvider ?? "claude"
+    // Read from UserDefaults (instant) instead of SwiftData fetch
+    private static func getPreferredProvider() -> String {
+        UserDefaults.standard.string(forKey: "cloudProvider") ?? "claude"
     }
 }

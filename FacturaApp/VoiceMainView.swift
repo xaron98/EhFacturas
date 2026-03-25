@@ -768,15 +768,14 @@ struct FacturaApp: App {
 
     let container = DataConfig.container
 
-    init() {
-        FacturaVencimientoService.registrarTareaBackground()
-    }
-
     var body: some Scene {
         WindowGroup {
             ThemeWrapper {
                 VoiceMainView(modelContext: container.mainContext)
                     .modifier(RevisionVencimientosModifier())
+                    .task {
+                        FacturaVencimientoService.registrarTareaBackground()
+                    }
             }
             .modelContainer(container)
         }
