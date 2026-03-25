@@ -23,6 +23,8 @@ struct FacturaEditView: View {
     @State private var confirmarEmision = false
     @State private var mostrarErrorNegocio = false
     @State private var generandoPDF = false
+    @State private var mostrarEnviarPDF = false
+    @State private var pdfParaEnviar: Data?
 
     private var esEditable: Bool {
         factura.estado == .borrador
@@ -151,6 +153,11 @@ struct FacturaEditView: View {
             } message: {
                 Text("Configura los datos de tu negocio en Ajustes antes de generar el PDF.")
             }
+            .sheet(isPresented: $mostrarEnviarPDF) {
+                if let data = pdfParaEnviar {
+                    ShareSheet(items: [data])
+                }
+            }
         }
     }
 
@@ -207,6 +214,10 @@ struct FacturaEditView: View {
                         miniBoton(titulo: "Emitir", icono: "paperplane", color: .green) {
                             confirmarEmision = true
                         }
+                    }
+
+                    miniBoton(titulo: "Enviar", icono: "paperplane.fill", color: .blue) {
+                        enviarPDF()
                     }
 
                     if factura.estado == .emitida {
@@ -449,6 +460,19 @@ struct FacturaEditView: View {
         try? modelContext.save()
         generandoPDF = false
         mostrarPDF = true
+    }
+
+    private func enviarPDF() {
+        let descriptor = FetchDescriptor<Negocio>()
+        guard let negocio = (try? modelContext.fetch(descriptor))?.first else {
+            mostrarErrorNegocio = true
+            return
+        }
+        let data = FacturaPDFGenerator.generar(factura: factura, negocio: negocio)
+        factura.pdfData = data
+        try? modelContext.save()
+        pdfParaEnviar = data
+        mostrarEnviarPDF = true
     }
 
     private func generarXML() {

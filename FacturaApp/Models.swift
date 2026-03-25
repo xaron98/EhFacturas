@@ -545,6 +545,61 @@ final class EventoSIF {
     }
 }
 
+// MARK: - FacturaRecurrente
+
+@Model
+final class FacturaRecurrente {
+    var nombre: String = ""
+    var clienteNombre: String = ""
+    var clienteNIF: String = ""
+    var articulosTexto: String = ""
+    var importeTotal: Double = 0
+    var frecuencia: String = "mensual"  // "semanal", "mensual", "trimestral", "anual"
+    var proximaFecha: Date = Date.now
+    var activo: Bool = true
+    var vecesGenerada: Int = 0
+    var fechaCreacion: Date = Date.now
+    var cliente: Cliente?
+
+    init(nombre: String, cliente: Cliente?, articulosTexto: String, importeTotal: Double, frecuencia: String) {
+        self.nombre = nombre
+        self.cliente = cliente
+        self.clienteNombre = cliente?.nombre ?? ""
+        self.clienteNIF = cliente?.nif ?? ""
+        self.articulosTexto = articulosTexto
+        self.importeTotal = importeTotal
+        self.frecuencia = frecuencia
+        self.proximaFecha = Self.calcularProximaFecha(desde: .now, frecuencia: frecuencia)
+    }
+
+    static func calcularProximaFecha(desde fecha: Date, frecuencia: String) -> Date {
+        let cal = Calendar.current
+        switch frecuencia {
+        case "semanal": return cal.date(byAdding: .weekOfYear, value: 1, to: fecha) ?? fecha
+        case "trimestral": return cal.date(byAdding: .month, value: 3, to: fecha) ?? fecha
+        case "anual": return cal.date(byAdding: .year, value: 1, to: fecha) ?? fecha
+        default: return cal.date(byAdding: .month, value: 1, to: fecha) ?? fecha
+        }
+    }
+}
+
+// MARK: - PlantillaFactura
+
+@Model
+final class PlantillaFactura {
+    var nombre: String = ""
+    var articulosTexto: String = ""
+    var observaciones: String = ""
+    var fechaCreacion: Date = Date.now
+    var vecesUsada: Int = 0
+
+    init(nombre: String, articulosTexto: String, observaciones: String = "") {
+        self.nombre = nombre
+        self.articulosTexto = articulosTexto
+        self.observaciones = observaciones
+    }
+}
+
 // MARK: - DataConfig (ModelContainer)
 
 enum DataConfig {
@@ -557,7 +612,9 @@ enum DataConfig {
         LineaFactura.self,
         RegistroFacturacion.self,
         EventoSIF.self,
-        PerfilImportacion.self
+        PerfilImportacion.self,
+        FacturaRecurrente.self,
+        PlantillaFactura.self
     ])
 
     static let container: ModelContainer = {

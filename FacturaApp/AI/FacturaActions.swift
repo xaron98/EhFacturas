@@ -91,6 +91,13 @@ struct CambiarDescuentoParams {
     var porcentaje: Double
 }
 
+struct CrearRecurrenteParams {
+    var nombreCliente: String
+    var articulosTexto: String
+    var frecuencia: String  // "semanal", "mensual", "trimestral", "anual"
+    var importe: Double
+}
+
 // MARK: - FacturaActions
 
 @MainActor
@@ -434,6 +441,26 @@ enum FacturaActions {
         default:
             return resumenGeneral(modelContext: modelContext)
         }
+    }
+
+    // MARK: - crearRecurrente
+
+    static func crearRecurrente(_ params: CrearRecurrenteParams, modelContext: ModelContext) -> String {
+        let clienteDesc = FetchDescriptor<Cliente>(predicate: #Predicate<Cliente> { $0.activo == true })
+        let clientes = (try? modelContext.fetch(clienteDesc)) ?? []
+        let cliente = clientes.first { $0.nombre.lowercased().contains(params.nombreCliente.lowercased()) }
+
+        let rec = FacturaRecurrente(
+            nombre: "Factura \(params.frecuencia) - \(cliente?.nombre ?? params.nombreCliente)",
+            cliente: cliente,
+            articulosTexto: params.articulosTexto,
+            importeTotal: params.importe,
+            frecuencia: params.frecuencia
+        )
+        modelContext.insert(rec)
+        try? modelContext.save()
+
+        return "Factura recurrente creada: \(rec.nombre) por \(Formateadores.formatEuros(params.importe)) (\(params.frecuencia))."
     }
 
     // MARK: - modificarLinea (edit tool)

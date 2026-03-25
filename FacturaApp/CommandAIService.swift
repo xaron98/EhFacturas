@@ -171,6 +171,7 @@ final class CommandAIService: ObservableObject {
         - "anula la factura de Juan" o "borra la última factura" → usa anular_factura.
         - "importa artículos de Salfon" o "carga clientes desde CSV" → usa importar_datos con tipo "articulos" o "clientes".
         - "presupuesto para Juan con..." → usa crear_factura con esPresupuesto=true.
+        - "factura mensual/semanal/trimestral/anual para Juan por 150€" → usa crear_recurrente con la frecuencia indicada.
         - "¿cuánto he facturado este trimestre?" o "informe" → usa consultar_resumen con tipo "general".
         - "exporta las facturas" → dile al usuario que vaya a la bandeja → Informes → Exportar.
         - Las facturas emitidas NO se pueden modificar → "Rectificar" en la vista de factura.
@@ -205,6 +206,9 @@ final class CommandAIService: ObservableObject {
         }
         if r.contains("presupuesto") && (r.contains("creado") || r.contains("creada") || r.contains("generado")) {
             return .facturaBorradorCreada
+        }
+        if r.contains("recurrente") && (r.contains("creada") || r.contains("configurada")) {
+            return .informacion
         }
         if r.contains("pagada") || r.contains("cobrada") {
             return .facturaMarcadaPagada

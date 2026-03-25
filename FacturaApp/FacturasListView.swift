@@ -105,6 +105,24 @@ struct FacturasListView: View {
                         }
                     }
 
+                    // Accesos rapidos
+                    Section {
+                        NavigationLink {
+                            RecurrentesView()
+                                .navigationTitle("Recurrentes")
+                        } label: {
+                            Label("Facturas recurrentes", systemImage: "arrow.clockwise")
+                        }
+                        NavigationLink {
+                            PlantillasView { plantilla in
+                                usarPlantilla(plantilla)
+                            }
+                            .navigationTitle("Plantillas")
+                        } label: {
+                            Label("Plantillas de factura", systemImage: "doc.on.doc")
+                        }
+                    }
+
                     // Filtros de estado
                     Section {
                         ScrollView(.horizontal, showsIndicators: false) {
@@ -204,6 +222,37 @@ struct FacturasListView: View {
         factura.fechaModificacion = .now
         try? modelContext.save()
         FacturaVencimientoService.shared.cancelarRecordatorios(para: factura)
+    }
+
+    private func usarPlantilla(_ plantilla: PlantillaFactura) {
+        // Incrementar contador de uso
+        plantilla.vecesUsada += 1
+
+        // Crear factura borrador usando la plantilla
+        let resultado = FacturaActions.crearFactura(
+            CrearFacturaParams(
+                nombreCliente: "",
+                articulosTexto: plantilla.articulosTexto,
+                descuento: 0,
+                observaciones: plantilla.observaciones,
+                esPresupuesto: false
+            ),
+            modelContext: modelContext
+        )
+
+        try? modelContext.save()
+
+        // Abrir la factura recien creada
+        var desc = FetchDescriptor<Factura>(
+            sortBy: [SortDescriptor(\.fechaCreacion, order: .reverse)]
+        )
+        desc.fetchLimit = 1
+        if let nueva = (try? modelContext.fetch(desc))?.first {
+            facturaDetalle = nueva
+        }
+
+        // Log resultado (silently used)
+        _ = resultado
     }
 
     private func anularFacturaDesdeSwipe(_ factura: Factura) {
@@ -329,6 +378,11 @@ struct FacturaDetalleView: View {
     @State private var xmlData: Data?
     @State private var confirmarEmision = false
     @State private var confirmarAnulacion = false
+    @State private var mostrarEnviar = false
+    @State private var pdfParaEnviar: Data?
+    @State private var mostrarPlantillaGuardada = false
+    @State private var mostrarCrearRecurrente = false
+    @State private var frecuenciaRecurrente = "mensual"
 
     var body: some View {
         List {
@@ -359,6 +413,9 @@ struct FacturaDetalleView: View {
                     HStack(spacing: 12) {
                         accionBoton("PDF", icono: "doc.richtext", color: .blue) {
                             generarYMostrarPDF()
+                        }
+                        accionBoton("Enviar", icono: "paperplane.fill", color: .blue) {
+                            generarYCompartirPDF()
                         }
                         if factura.estado != .borrador && !(factura.registros ?? []).isEmpty {
                             accionBoton("XML", icono: "doc.text", color: .orange) {
@@ -393,6 +450,12 @@ struct FacturaDetalleView: View {
                             accionBoton("Rectificar", icono: "doc.on.doc", color: .purple) {
                                 crearRectificativa(factura)
                             }
+                        }
+                        accionBoton("Plantilla", icono: "doc.on.doc.fill", color: .purple) {
+                            guardarComoPlantilla()
+                        }
+                        accionBoton("Recurrente", icono: "arrow.clockwise", color: .teal) {
+                            mostrarCrearRecurrente = true
                         }
                     }
                 }
@@ -565,6 +628,25 @@ struct FacturaDetalleView: View {
         } message: {
             Text("Se creará un registro de anulación VeriFactu. Esta acción no se puede deshacer.")
         }
+        .sheet(isPresented: $mostrarEnviar) {
+            if let data = pdfParaEnviar {
+                ShareSheet(items: [data])
+            }
+        }
+        .alert("Plantilla guardada", isPresented: $mostrarPlantillaGuardada) {
+            Button("OK") { }
+        } message: {
+            Text("La factura se ha guardado como plantilla. Puedes usarla desde la lista de facturas.")
+        }
+        .confirmationDialog("Crear factura recurrente", isPresented: $mostrarCrearRecurrente) {
+            Button("Semanal") { crearRecurrente(frecuencia: "semanal") }
+            Button("Mensual") { crearRecurrente(frecuencia: "mensual") }
+            Button("Trimestral") { crearRecurrente(frecuencia: "trimestral") }
+            Button("Anual") { crearRecurrente(frecuencia: "anual") }
+            Button("Cancelar", role: .cancel) { }
+        } message: {
+            Text("Selecciona la frecuencia de la factura recurrente basada en \(factura.numeroFactura).")
+        }
     }
 
     private func accionBoton(_ label: String, icono: String, color: Color, accion: @escaping () -> Void) -> some View {
@@ -677,5 +759,52 @@ struct FacturaDetalleView: View {
         try? modelContext.save()
 
         EventLogService.registrar(tipo: EventLogService.FACTURA_RECTIFICADA, descripcion: "Factura rectificativa creada desde \(facturaOriginal.numeroFactura)", numeroFactura: nueva.numeroFactura, modelContext: modelContext)
+    }
+
+    // MARK: - Sprint 2: Enviar PDF
+
+    private func generarYCompartirPDF() {
+        let desc = FetchDescriptor<Negocio>()
+        guard let negocio = try? modelContext.fetch(desc).first else { return }
+        let data = FacturaPDFGenerator.generar(factura: factura, negocio: negocio)
+        factura.pdfData = data
+        try? modelContext.save()
+        pdfParaEnviar = data
+        mostrarEnviar = true
+    }
+
+    // MARK: - Sprint 2: Guardar como plantilla
+
+    private func guardarComoPlantilla() {
+        let lineasTexto = factura.lineasOrdenadas.map { linea in
+            "\(String(format: "%.0f", linea.cantidad)) \(linea.concepto) a \(String(format: "%.2f", linea.precioUnitario))"
+        }.joined(separator: ", ")
+
+        let plantilla = PlantillaFactura(
+            nombre: "Plantilla - \(factura.clienteNombre.isEmpty ? factura.numeroFactura : factura.clienteNombre)",
+            articulosTexto: lineasTexto,
+            observaciones: factura.observaciones
+        )
+        modelContext.insert(plantilla)
+        try? modelContext.save()
+        mostrarPlantillaGuardada = true
+    }
+
+    // MARK: - Sprint 2: Crear factura recurrente
+
+    private func crearRecurrente(frecuencia: String) {
+        let lineasTexto = factura.lineasOrdenadas.map { linea in
+            "\(String(format: "%.0f", linea.cantidad)) \(linea.concepto)"
+        }.joined(separator: ", ")
+
+        let rec = FacturaRecurrente(
+            nombre: "Recurrente \(frecuencia) - \(factura.clienteNombre.isEmpty ? factura.numeroFactura : factura.clienteNombre)",
+            cliente: factura.cliente,
+            articulosTexto: lineasTexto,
+            importeTotal: factura.totalFactura,
+            frecuencia: frecuencia
+        )
+        modelContext.insert(rec)
+        try? modelContext.save()
     }
 }
