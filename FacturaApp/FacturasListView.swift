@@ -240,8 +240,12 @@ struct StatCard: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(color.opacity(0.06))
+        .background(.thinMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(.white.opacity(0.2), lineWidth: 0.5)
+        )
     }
 }
 

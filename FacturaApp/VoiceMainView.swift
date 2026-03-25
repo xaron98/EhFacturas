@@ -53,84 +53,94 @@ struct VoiceMainView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Toolbar superior
-            toolbarView
+        ZStack {
+            // Dynamic gradient background
+            LinearGradient(
+                colors: [Color.blue.opacity(0.15), Color.purple.opacity(0.12)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
 
-            // Zona de chat (scrollable)
-            ScrollViewReader { proxy in
-                ScrollView {
-                    LazyVStack(spacing: 12) {
-                        // Mensaje de bienvenida si no hay mensajes
-                        if mensajes.isEmpty && !procesando {
-                            bienvenidaView
-                        }
+            VStack(spacing: 0) {
+                // Toolbar superior
+                toolbarView
 
-                        // Mensajes
-                        ForEach(mensajes) { msg in
-                            mensajeView(msg)
-                                .id(msg.id)
-                        }
-
-                        // Indicador de procesando
-                        if procesando {
-                            HStack(spacing: 8) {
-                                ProgressView()
-                                    .scaleEffect(0.8)
-                                Text("Pensando...")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                // Zona de chat (scrollable)
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        LazyVStack(spacing: 12) {
+                            // Mensaje de bienvenida si no hay mensajes
+                            if mensajes.isEmpty && !procesando {
+                                bienvenidaView
                             }
-                            .padding(.vertical, 8)
-                            .id("procesando")
-                        }
 
-                        // Texto transcrito en tiempo real
-                        if speech.estaEscuchando {
-                            HStack(spacing: 8) {
-                                Circle()
-                                    .fill(.red)
-                                    .frame(width: 8, height: 8)
-                                Text(speech.textoTranscrito.isEmpty ? "Escuchando..." : speech.textoTranscrito)
-                                    .font(.subheadline)
-                                    .foregroundStyle(speech.textoTranscrito.isEmpty ? .tertiary : .primary)
+                            // Mensajes
+                            ForEach(mensajes) { msg in
+                                mensajeView(msg)
+                                    .id(msg.id)
                             }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .id("escuchando")
+
+                            // Indicador de procesando
+                            if procesando {
+                                HStack(spacing: 8) {
+                                    ProgressView()
+                                        .scaleEffect(0.8)
+                                    Text("Pensando...")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                .padding(.vertical, 8)
+                                .id("procesando")
+                            }
+
+                            // Texto transcrito en tiempo real
+                            if speech.estaEscuchando {
+                                HStack(spacing: 8) {
+                                    Circle()
+                                        .fill(.red)
+                                        .frame(width: 8, height: 8)
+                                    Text(speech.textoTranscrito.isEmpty ? "Escuchando..." : speech.textoTranscrito)
+                                        .font(.subheadline)
+                                        .foregroundStyle(speech.textoTranscrito.isEmpty ? .tertiary : .primary)
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .id("escuchando")
+                            }
                         }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                }
-                .onChange(of: mensajes.count) { _, _ in
-                    withAnimation {
-                        if let ultimo = mensajes.last {
-                            proxy.scrollTo(ultimo.id, anchor: .bottom)
-                        }
-                    }
-                }
-                .onChange(of: speech.estaEscuchando) { _, escuchando in
-                    if escuchando {
+                    .onChange(of: mensajes.count) { _, _ in
                         withAnimation {
-                            proxy.scrollTo("escuchando", anchor: .bottom)
+                            if let ultimo = mensajes.last {
+                                proxy.scrollTo(ultimo.id, anchor: .bottom)
+                            }
+                        }
+                    }
+                    .onChange(of: speech.estaEscuchando) { _, escuchando in
+                        if escuchando {
+                            withAnimation {
+                                proxy.scrollTo("escuchando", anchor: .bottom)
+                            }
+                        }
+                    }
+                    .onChange(of: procesando) { _, proc in
+                        if proc {
+                            withAnimation {
+                                proxy.scrollTo("procesando", anchor: .bottom)
+                            }
                         }
                     }
                 }
-                .onChange(of: procesando) { _, proc in
-                    if proc {
-                        withAnimation {
-                            proxy.scrollTo("procesando", anchor: .bottom)
-                        }
-                    }
-                }
+
+                Divider()
+
+                // Zona de entrada (abajo fija)
+                entradaView
             }
-
-            Divider()
-
-            // Zona de entrada (abajo fija)
-            entradaView
         }
         .onAppear {
             // Si no hay negocio, iniciar onboarding conversacional
@@ -293,30 +303,37 @@ struct VoiceMainView: View {
                 }
             } label: {
                 ZStack {
-                    // Outer glow
+                    // Glass background
                     Circle()
-                        .fill(.blue.opacity(speech.estaEscuchando ? 0 : 0.06))
+                        .fill(.ultraThinMaterial)
+                        .frame(width: 80, height: 80)
+                        .shadow(color: speech.estaEscuchando ? .purple.opacity(0.4) : .black.opacity(0.08), radius: speech.estaEscuchando ? 20 : 10)
+
+                    // Border
+                    Circle()
+                        .stroke(
+                            LinearGradient(colors: [.white.opacity(0.5), .white.opacity(0.1)], startPoint: .topLeading, endPoint: .bottomTrailing),
+                            lineWidth: 1
+                        )
                         .frame(width: 80, height: 80)
 
-                    Circle()
-                        .stroke(lineWidth: speech.estaEscuchando ? 2.5 : 1.5)
-                        .foregroundStyle(speech.estaEscuchando ? .red : .blue.opacity(0.4))
-                        .frame(width: 64, height: 64)
-
+                    // Audio ring
                     if speech.estaEscuchando {
                         Circle()
-                            .stroke(lineWidth: 1)
-                            .foregroundStyle(.red.opacity(0.2))
+                            .stroke(lineWidth: 1.5)
+                            .foregroundStyle(.purple.opacity(0.3))
                             .scaleEffect(1.0 + CGFloat(speech.nivelAudio) * 0.4)
                             .animation(.easeOut(duration: 0.1), value: speech.nivelAudio)
-                            .frame(width: 64, height: 64)
+                            .frame(width: 80, height: 80)
                     }
 
-                    Image(systemName: speech.estaEscuchando ? "stop.fill" : "mic.fill")
-                        .font(.system(size: 22, weight: .medium))
-                        .foregroundStyle(speech.estaEscuchando ? .red : .blue)
+                    Image(systemName: speech.estaEscuchando ? "waveform" : "mic.fill")
+                        .font(.system(size: 28, weight: .light))
+                        .foregroundStyle(speech.estaEscuchando ? .purple : .primary)
                 }
             }
+            .scaleEffect(speech.estaEscuchando ? 1.1 : 1.0)
+            .animation(.spring(response: 0.4, dampingFraction: 0.5), value: speech.estaEscuchando)
             .buttonStyle(.plain)
             .accessibilityLabel(speech.estaEscuchando ? "Detener grabación" : "Activar micrófono")
             .accessibilityHint("Pulsa para hablar un comando")
@@ -336,7 +353,7 @@ struct VoiceMainView: View {
                             .foregroundStyle(.secondary)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 7)
-                            .background(.fill.tertiary)
+                            .background(.regularMaterial)
                             .clipShape(Capsule())
                     }
                     .buttonStyle(.plain)
@@ -374,13 +391,7 @@ struct VoiceMainView: View {
                 Text(msg.texto)
                     .font(.subheadline)
                     .padding(12)
-                    .background(
-                        LinearGradient(
-                            colors: [.blue.opacity(0.15), .blue.opacity(0.08)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .background(.ultraThinMaterial)
                     .foregroundStyle(.primary)
                     .clipShape(RoundedRectangle(cornerRadius: 16))
                 Image(systemName: "person.circle.fill")
@@ -415,7 +426,7 @@ struct VoiceMainView: View {
                     }
                     .padding(12)
                 }
-                .background(Color(.systemGray6))
+                .background(.thinMaterial)
                 .clipShape(RoundedRectangle(cornerRadius: 16))
                 Spacer()
             }
@@ -459,7 +470,7 @@ struct VoiceMainView: View {
                 .textFieldStyle(.plain)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
-                .background(.fill.tertiary)
+                .background(.regularMaterial)
                 .clipShape(Capsule())
                 .onSubmit {
                     if !textoManual.trimmingCharacters(in: .whitespaces).isEmpty {
@@ -524,7 +535,7 @@ struct VoiceMainView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
-        .background(.bar)
+        .background(.ultraThinMaterial)
     }
 
     // MARK: - Helpers de estilo

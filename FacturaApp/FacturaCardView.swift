@@ -49,8 +49,16 @@ struct FacturaCardView: View {
                 }
                 .padding(14)
             }
-            .background(Color(.systemGray6))
-            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .background(.thinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .stroke(
+                        LinearGradient(colors: [.white.opacity(0.4), .clear], startPoint: .topLeading, endPoint: .bottomTrailing),
+                        lineWidth: 0.5
+                    )
+            )
+            .shadow(color: .black.opacity(0.05), radius: 8, y: 4)
         }
         .buttonStyle(.plain)
     }

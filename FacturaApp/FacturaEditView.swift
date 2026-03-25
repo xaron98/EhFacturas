@@ -389,7 +389,7 @@ struct FacturaEditView: View {
                 .padding(.vertical, 10)
             }
         }
-        .background(.bar)
+        .background(.ultraThinMaterial)
     }
 
     // MARK: - Helpers
