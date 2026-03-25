@@ -49,7 +49,7 @@ struct FacturaCardView: View {
                 }
                 .padding(14)
             }
-            .background(.thinMaterial)
+            .background(Color(.secondarySystemBackground))
             .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)

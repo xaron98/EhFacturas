@@ -55,13 +55,9 @@ struct VoiceMainView: View {
 
     var body: some View {
         ZStack {
-            // Dynamic gradient background (subtle, doesn't wash out text)
-            LinearGradient(
-                colors: [Color.blue.opacity(0.08), Color.purple.opacity(0.06)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            // Background: system default + subtle tint in light mode only
+            Color(.systemBackground)
+                .ignoresSafeArea()
 
             VStack(spacing: 0) {
                 // Toolbar superior
@@ -313,16 +309,13 @@ struct VoiceMainView: View {
                 ZStack {
                     // Glass background
                     Circle()
-                        .fill(.ultraThinMaterial)
+                        .fill(Color(.secondarySystemBackground))
                         .frame(width: 80, height: 80)
-                        .shadow(color: speech.estaEscuchando ? .purple.opacity(0.4) : .black.opacity(0.08), radius: speech.estaEscuchando ? 20 : 10)
+                        .shadow(color: speech.estaEscuchando ? .purple.opacity(0.4) : .black.opacity(0.12), radius: speech.estaEscuchando ? 20 : 10)
 
                     // Border
                     Circle()
-                        .stroke(
-                            LinearGradient(colors: [Color.primary.opacity(0.3), Color.primary.opacity(0.05)], startPoint: .topLeading, endPoint: .bottomTrailing),
-                            lineWidth: 1
-                        )
+                        .stroke(Color(.separator), lineWidth: 1)
                         .frame(width: 80, height: 80)
 
                     // Audio ring
@@ -361,7 +354,7 @@ struct VoiceMainView: View {
                             .foregroundStyle(.primary)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 7)
-                            .background(.regularMaterial)
+                            .background(Color(.secondarySystemBackground))
                             .clipShape(Capsule())
                     }
                     .buttonStyle(.plain)
@@ -399,7 +392,7 @@ struct VoiceMainView: View {
                 Text(msg.texto)
                     .font(.subheadline)
                     .padding(12)
-                    .background(.ultraThinMaterial)
+                    .background(Color(.secondarySystemBackground))
                     .foregroundStyle(.primary)
                     .clipShape(RoundedRectangle(cornerRadius: 16))
                 Image(systemName: "person.circle.fill")
@@ -434,7 +427,7 @@ struct VoiceMainView: View {
                     }
                     .padding(12)
                 }
-                .background(.thinMaterial)
+                .background(Color(.tertiarySystemBackground))
                 .clipShape(RoundedRectangle(cornerRadius: 16))
                 Spacer()
             }
@@ -478,7 +471,7 @@ struct VoiceMainView: View {
                 .textFieldStyle(.plain)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
-                .background(.regularMaterial)
+                .background(Color(.secondarySystemBackground))
                 .clipShape(Capsule())
                 .onSubmit {
                     if !textoManual.trimmingCharacters(in: .whitespaces).isEmpty {
@@ -555,7 +548,7 @@ struct VoiceMainView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
-        .background(.ultraThinMaterial)
+        .background(Color(.secondarySystemBackground))
     }
 
     // MARK: - Helpers de estilo
