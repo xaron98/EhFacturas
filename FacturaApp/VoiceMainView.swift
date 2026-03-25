@@ -47,6 +47,7 @@ struct VoiceMainView: View {
     @State private var currentTask: Task<Void, Never>?
     @State private var mostrarScanner = false
     @State private var animateGradient = false
+    @FocusState private var textoFocused: Bool
 
     private var hayNegocio: Bool { !negocios.isEmpty }
 
@@ -133,6 +134,8 @@ struct VoiceMainView: View {
                         .padding(.horizontal, 16)
                         .padding(.vertical, 12)
                     }
+                    .scrollDismissesKeyboard(.interactively)
+                    .onTapGesture { textoFocused = false }
                     .onChange(of: mensajes.count) { _, _ in
                         withAnimation {
                             if let ultimo = mensajes.last {
@@ -504,6 +507,7 @@ struct VoiceMainView: View {
             TextField("Escribe un comando...", text: $textoManual)
                 .font(.subheadline)
                 .textFieldStyle(.plain)
+                .focused($textoFocused)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
                 .onSubmit {
@@ -513,6 +517,18 @@ struct VoiceMainView: View {
                         enviarComando(cmd)
                     }
                 }
+
+            // Dismiss keyboard button (when focused and empty)
+            if textoFocused && textoManual.trimmingCharacters(in: .whitespaces).isEmpty {
+                Button {
+                    textoFocused = false
+                } label: {
+                    Image(systemName: "keyboard.chevron.compact.down")
+                        .font(.system(size: 16))
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
 
             // Send button
             if !textoManual.trimmingCharacters(in: .whitespaces).isEmpty {
@@ -679,14 +695,27 @@ struct BandejaManualView: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 10)
 
-                Picker("Sección", selection: $seccionSeleccionada) {
-                    ForEach(SeccionBandeja.allCases, id: \.self) { sec in
-                        Text(sec.rawValue).tag(sec)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(SeccionBandeja.allCases, id: \.self) { sec in
+                            Button {
+                                seccionSeleccionada = sec
+                            } label: {
+                                Text(sec.rawValue)
+                                    .font(.subheadline)
+                                    .fontWeight(seccionSeleccionada == sec ? .semibold : .regular)
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 7)
+                                    .background(seccionSeleccionada == sec ? Color.blue : Color(.systemGray5))
+                                    .foregroundStyle(seccionSeleccionada == sec ? .white : .primary)
+                                    .clipShape(Capsule())
+                            }
+                            .buttonStyle(.plain)
+                        }
                     }
+                    .padding(.horizontal)
+                    .padding(.top, 8)
                 }
-                .pickerStyle(.segmented)
-                .padding(.horizontal)
-                .padding(.top, 8)
 
                 Group {
                     switch seccionSeleccionada {
