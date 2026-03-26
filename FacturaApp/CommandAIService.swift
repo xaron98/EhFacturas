@@ -126,16 +126,10 @@ final class CommandAIService: ObservableObject {
                 contextoSesion = Array(contextoSesion.suffix(10))
             }
 
-            // Si se creó una factura, buscar la más reciente
+            // Si se creó una factura, recuperar su ID desde el actor de fondo
             var facturaID: PersistentIdentifier?
             if accion == .facturaBorradorCreada {
-                var desc = FetchDescriptor<Factura>(
-                    sortBy: [SortDescriptor(\.fechaCreacion, order: .reverse)]
-                )
-                desc.fetchLimit = 1
-                if let factura = (try? modelContext.fetch(desc))?.first {
-                    facturaID = factura.persistentModelID
-                }
+                facturaID = await FacturacionStore.shared.ultimaFacturaID()
             }
 
             let resultado = ComandoResultado(
