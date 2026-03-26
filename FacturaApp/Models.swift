@@ -655,21 +655,25 @@ enum DataConfig {
         )
         do {
             return try ModelContainer(for: schema, configurations: config)
-        } catch {
-            print("INFO: CloudKit config failed, trying local: \(error.localizedDescription)")
+        } catch let cloudKitError {
+            print("INFO: CloudKit config failed, trying local: \(cloudKitError.localizedDescription)")
             // Fallback sin CloudKit
             let localConfig = ModelConfiguration("FacturaApp", isStoredInMemoryOnly: false)
             do {
                 return try ModelContainer(for: schema, configurations: localConfig)
-            } catch {
-                print("ERROR: Local config failed, using memory: \(error.localizedDescription)")
+            } catch let localError {
+                print("ERROR: Local config failed, using memory: \(localError.localizedDescription)")
                 let memoryConfig = ModelConfiguration(isStoredInMemoryOnly: true)
                 do {
                     return try ModelContainer(for: schema, configurations: memoryConfig)
-                } catch {
-                    // Absolute last resort — create with minimal schema
-                    print("FATAL: Cannot create any ModelContainer: \(error)")
-                    return try! ModelContainer(for: Schema([]), configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+                } catch let memoryError {
+                    fatalError("""
+                    EhFacturas!: No se pudo crear ningún ModelContainer.
+                    CloudKit: \(cloudKitError.localizedDescription)
+                    Local: \(localError.localizedDescription)
+                    Memoria: \(memoryError.localizedDescription)
+                    Reporta este error en soporte.
+                    """)
                 }
             }
         }
