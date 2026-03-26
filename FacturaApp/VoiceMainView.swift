@@ -1,7 +1,7 @@
 // VoiceMainView.swift
 // FacturaApp — Vista principal controlada por voz
 // Layout tipo chat: conversación arriba, micro abajo.
-// Sub-views extracted to ChatMessageView, CommandInputBar, WelcomeView.
+// Sub-views extracted to ChatTimelineView, ChatMessageView, CommandInputBar, WelcomeView.
 
 import SwiftUI
 import SwiftData
@@ -90,86 +90,20 @@ struct VoiceMainView: View {
                 toolbarView
 
                 // Zona de chat (scrollable)
-                ScrollViewReader { proxy in
-                    ScrollView {
-                        LazyVStack(spacing: 12) {
-                            // Mensaje de bienvenida si no hay mensajes
-                            if mensajes.isEmpty && !procesando {
-                                WelcomeView(
-                                    hayNegocio: hayNegocio,
-                                    estaEscuchando: speech.estaEscuchando,
-                                    nivelAudio: speech.nivelAudio,
-                                    permisoConecido: speech.permisoConecido,
-                                    onMicTap: { toggleMic() },
-                                    onEjemploTap: { ejemplo in enviarComando(ejemplo) }
-                                )
-                            }
-
-                            // Mensajes
-                            ForEach(mensajes) { msg in
-                                ChatMessageView(msg: msg) { factura in
-                                    facturaParaEditar = factura
-                                }
-                                .id(msg.id)
-                            }
-
-                            // Indicador de procesando
-                            if procesando {
-                                HStack(spacing: 8) {
-                                    ProgressView()
-                                        .scaleEffect(0.8)
-                                    Text(aiService.estadoDetallado)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                                .padding(.vertical, 8)
-                                .transition(.scale.combined(with: .opacity))
-                                .id("procesando")
-                            }
-
-                            // Texto transcrito en tiempo real
-                            if speech.estaEscuchando {
-                                HStack(spacing: 8) {
-                                    Circle()
-                                        .fill(.red)
-                                        .frame(width: 8, height: 8)
-                                    Text(speech.textoTranscrito.isEmpty ? "Escuchando..." : speech.textoTranscrito)
-                                        .font(.subheadline)
-                                        .foregroundStyle(speech.textoTranscrito.isEmpty ? .tertiary : .primary)
-                                }
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 8)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .id("escuchando")
-                            }
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
-                    }
-                    .scrollDismissesKeyboard(.interactively)
-                    .onTapGesture { textoFocused = false }
-                    .onChange(of: mensajes.count) { _, _ in
-                        withAnimation {
-                            if let ultimo = mensajes.last {
-                                proxy.scrollTo(ultimo.id, anchor: .bottom)
-                            }
-                        }
-                    }
-                    .onChange(of: speech.estaEscuchando) { _, escuchando in
-                        if escuchando {
-                            withAnimation {
-                                proxy.scrollTo("escuchando", anchor: .bottom)
-                            }
-                        }
-                    }
-                    .onChange(of: procesando) { _, proc in
-                        if proc {
-                            withAnimation {
-                                proxy.scrollTo("procesando", anchor: .bottom)
-                            }
-                        }
-                    }
-                }
+                ChatTimelineView(
+                    mensajes: mensajes,
+                    procesando: procesando,
+                    hayNegocio: hayNegocio,
+                    estaEscuchando: speech.estaEscuchando,
+                    nivelAudio: speech.nivelAudio,
+                    permisoConecido: speech.permisoConecido,
+                    textoTranscrito: speech.textoTranscrito,
+                    estadoDetallado: aiService.estadoDetallado,
+                    onFacturaTap: { factura in facturaParaEditar = factura },
+                    onMicTap: { toggleMic() },
+                    onEjemploTap: { ejemplo in enviarComando(ejemplo) },
+                    onTapBackground: { textoFocused = false }
+                )
 
                 // Zona de entrada (abajo fija)
                 CommandInputBar(
