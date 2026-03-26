@@ -8,7 +8,7 @@ import StoreKit
 @Observable
 final class SubscriptionManager {
 
-    static var shared = SubscriptionManager()
+    static let shared = SubscriptionManager()
 
     private(set) var isProSubscriber = false
     private(set) var products: [Product] = []
@@ -17,10 +17,17 @@ final class SubscriptionManager {
     static let proMonthlyID = "es.facturaapp.pro.monthly"
     static let proYearlyID = "es.facturaapp.pro.yearly"
 
-    private var transactionListener: Task<Void, Never>?
+    // nonisolated(unsafe) permite acceder a esta propiedad desde deinit (contexto no aislado)
+    // sin violar Swift 6 strict concurrency. La tarea se escribe una sola vez en init
+    // y solo se cancela en deinit — sin carreras de datos reales.
+    nonisolated(unsafe) private var transactionListener: Task<Void, Never>?
 
     private init() {
         transactionListener = listenForTransactions()
+    }
+
+    deinit {
+        transactionListener?.cancel()
     }
 
     // MARK: - Load products

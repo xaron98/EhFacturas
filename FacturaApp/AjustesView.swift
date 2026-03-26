@@ -22,8 +22,10 @@ struct AjustesView: View {
     @State private var certificadoError: String?
     @State private var certificadoExito = false
     @State private var mostrarEventLog = false
+    #if DEBUG
     @State private var mostrarAPIKeyInput = false
     @State private var apiKeyTexto = ""
+    #endif
     @State private var mostrarSuscripcion = false
     @State private var mostrarShareBackup = false
     @State private var backupData: Data?
@@ -452,6 +454,7 @@ struct AjustesView: View {
         .sheet(isPresented: $mostrarEventLog) {
             EventLogView()
         }
+        #if DEBUG
         .alert("API Key (desarrollo)", isPresented: $mostrarAPIKeyInput) {
             SecureField("sk-...", text: $apiKeyTexto)
             Button("Guardar") {
@@ -464,6 +467,7 @@ struct AjustesView: View {
         } message: {
             Text("Introduce tu API key de Claude o OpenAI para pruebas.")
         }
+        #endif
         .sheet(isPresented: $mostrarSuscripcion) {
             SubscriptionView()
         }

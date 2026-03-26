@@ -24,6 +24,19 @@ actor FacturacionStore {
 
     // MARK: - Command actions (background)
 
+    // MARK: ultimaFacturaID
+
+    /// Devuelve el PersistentIdentifier de la factura más reciente (por fechaCreacion).
+    /// Se llama desde CommandAIService tras confirmar que se creó una factura.
+    func ultimaFacturaID() -> PersistentIdentifier? {
+        let ctx = makeContext()
+        var desc = FetchDescriptor<Factura>(
+            sortBy: [SortDescriptor(\.fechaCreacion, order: .reverse)]
+        )
+        desc.fetchLimit = 1
+        return (try? ctx.fetch(desc))?.first?.persistentModelID
+    }
+
     // MARK: configurarNegocio
 
     func configurarNegocio(_ params: ConfigurarNegocioParams) -> String {
