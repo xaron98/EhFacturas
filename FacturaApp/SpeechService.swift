@@ -24,7 +24,7 @@ final class SpeechService: ObservableObject {
     nonisolated(unsafe) private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     private var recognitionTask: SFSpeechRecognitionTask?
     nonisolated(unsafe) private let audioEngine = AVAudioEngine()
-    nonisolated(unsafe) private var lastLevelUpdate: Date = .distantPast
+    private let audioMeter = AudioMeterActor()
 
     // Timer de silencio: si pasan N segundos sin cambios, finaliza automáticamente
     private var silenceTimer: Timer?
@@ -179,13 +179,14 @@ final class SpeechService: ObservableObject {
 
         inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { @Sendable [weak self] buffer, _ in
             request.append(buffer)
-            // Throttle UI updates to ~10fps (every 100ms)
-            let now = Date()
-            guard let self, now.timeIntervalSince(self.lastLevelUpdate) > 0.1 else { return }
-            self.lastLevelUpdate = now
+            guard let self else { return }
+            // Throttle UI updates a ~10fps usando AudioMeterActor (sin data races)
             let level = self.calcularNivelAudio(buffer: buffer)
-            Task { @MainActor [weak self] in
-                self?.nivelAudio = level
+            Task { [weak self] in
+                guard let self, await self.audioMeter.shouldUpdate() else { return }
+                await MainActor.run {
+                    self.nivelAudio = level
+                }
             }
         }
 
@@ -230,6 +231,9 @@ final class SpeechService: ObservableObject {
 
         estaEscuchando = false
         nivelAudio = 0
+
+        // Resetear estado del medidor de audio
+        Task { await audioMeter.reset() }
 
         // Desactivar sesión de audio
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
